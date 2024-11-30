@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema(
   {
     userId: { type: String, required: true, unique: true },
     username: { type: String },
+    additional_details: { type: Object },
     accountName: { type: String },
     firstContact: { type: Date },
     accountAge: { type: Number },
