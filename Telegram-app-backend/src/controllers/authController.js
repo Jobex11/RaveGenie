@@ -1,7 +1,8 @@
-const userSchema = require("../../mongoose/schemas/database.mjs");
+const User = require("../models/User");
 
-app.post("/auth", async (req, res) => {
-  const { userId, username, additional_details } = req.body;
+// Authenticate User
+exports.authenticateUser = async (req, res) => {
+  const { telegram_id, telegram_username, additional_details } = req.body;
 
   if (!telegram_id || !telegram_username) {
     return res
@@ -32,4 +33,4 @@ app.post("/auth", async (req, res) => {
     console.error("Error during authentication:", err);
     res.status(500).json({ error: "Internal server error." });
   }
-});
+};

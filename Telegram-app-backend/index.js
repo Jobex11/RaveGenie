@@ -2,10 +2,12 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
-
-// Load environment variables
 dotenv.config();
 
+//MONGODB connection
+
+const connectDB = require("./src/config/db");
+connectDB();
 // Initialize the Express app
 const app = express();
 
@@ -14,11 +16,10 @@ app.use(express.json()); // Parse JSON bodies
 app.use(cors()); // Enable CORS
 
 // Example Routes
-//const apiRoutes = require("./routes/api");
-// Import your API routes
 
-//app.use("/api", apiRoutes);
-//
+// Import your API routes
+const userAuthRoutes = require("./src/routes/userAuthRoutes");
+app.use("/auth", userAuthRoutes);
 
 // Health Check Route
 app.get("/", (req, res) => {
@@ -36,5 +37,5 @@ const PORT = process.env.PORT || 4000;
 
 // Start the server
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on http://localhost:${PORT} 🟢`);
 });

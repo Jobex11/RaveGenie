@@ -1,9 +1,9 @@
 // database.js
-import mongoose from "mongoose";
-import { config } from "dotenv";
+const mongoose = require("mongoose");
+const dotenv = require("dotenv");
 
 // Load environment variables from .env file
-config();
+dotenv.config();
 
 // Define User Schema
 const userSchema = new mongoose.Schema(
@@ -36,5 +36,4 @@ const Session = mongoose.model("Session", sessionSchema);
 // Create User Model
 const User = mongoose.model("User", userSchema);
 
-export { User };
-export { Session };
+module.exports = { User, Session };
