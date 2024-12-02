@@ -1,10 +1,17 @@
-const User = require("../models/User");
+const { User } = require("../models/database");
 
 // Authenticate User
 exports.authenticateUser = async (req, res) => {
-  const { telegram_id, telegram_username, additional_details } = req.body;
+  const {
+    telegram_id,
+    username,
+    first_name,
+    last_name,
+    is_bot,
+    language_code,
+  } = req.body;
 
-  if (!telegram_id || !telegram_username) {
+  if (!telegram_id || !username) {
     return res
       .status(400)
       .json({ error: "telegram_id and telegram_username are required." });
@@ -18,8 +25,12 @@ exports.authenticateUser = async (req, res) => {
       // Create a new user if not found
       user = new User({
         telegram_id,
-        telegram_username,
-        additional_details: additional_details || {}, // Optional additional details
+        username,
+        first_name,
+        last_name,
+        is_bot,
+        language_code,
+        // Optional additional details
       });
       await user.save();
       return res
@@ -31,6 +42,16 @@ exports.authenticateUser = async (req, res) => {
     res.status(200).json({ message: "User authenticated successfully.", user });
   } catch (err) {
     console.error("Error during authentication:", err);
+    res.status(500).json({ error: "Internal server error." });
+  }
+};
+
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find();
+    res.status(200).json({ users });
+  } catch (err) {
+    console.error("Error fetching users:", err);
     res.status(500).json({ error: "Internal server error." });
   }
 };

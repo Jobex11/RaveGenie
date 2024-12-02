@@ -8,17 +8,29 @@ dotenv.config();
 // Define User Schema
 const userSchema = new mongoose.Schema(
   {
-    userId: { type: String, required: true, unique: true },
+    telegram_id: { type: String, required: true, unique: true },
     username: { type: String },
     additional_details: { type: Object },
     accountName: { type: String },
+    first_name: { type: String },
+    last_name: { type: String },
+    is_bot: { type: Boolean, default: false },
+    language_code: { type: String },
+
+    accountName: { type: String },
+
     firstContact: { type: Date },
     accountAge: { type: Number },
     activityLevel: { type: Number },
     isPremium: { type: Number },
     ogLevel: { type: Number },
     socials: { type: String, default: false },
-    shares: { type: Number },
+
+    shares: { type: Number, default: 0 }, // initialize shares to 0
+
+    has_joined_telegram: { type: Boolean, default: false },
+    has_followed_youtube: { type: Boolean, default: false },
+    has_followed_x: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

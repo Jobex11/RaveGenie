@@ -1,26 +1,30 @@
 // Import required modules
 const express = require("express");
+const bot = require("./bot");
 const dotenv = require("dotenv");
 const cors = require("cors");
 dotenv.config();
 
-//MONGODB connection
+const userAuthRoutes = require("./src/routes/userAuthRoutes");
+const usernameRoutes = require("./src/routes/usernameRoutes");
+const shareRoutes = require("./src/routes/shareRoutes");
+const socialhandleRoutes = require("./src/routes/socialHandleRoutes");
 
+// ==> MONGODB connection
 const connectDB = require("./src/config/db");
 connectDB();
-// Initialize the Express app
+// ==> Initialize the Express app
 const app = express();
 
 // Middleware
-app.use(express.json()); // Parse JSON bodies
-app.use(cors()); // Enable CORS
+app.use(express.json());
+app.use(cors());
 
-// Example Routes
-
-// Import your API routes
-const userAuthRoutes = require("./src/routes/userAuthRoutes");
-app.use("/auth", userAuthRoutes);
-
+// ==> YOUR API ROUTES
+app.use("/api/auth", userAuthRoutes);
+app.use("/api/username", usernameRoutes);
+app.use("/api/shares", shareRoutes);
+app.use("/api/socialhandle", socialhandleRoutes);
 // Health Check Route
 app.get("/", (req, res) => {
   res.status(200).json({ message: "Server is running 🚀" });
