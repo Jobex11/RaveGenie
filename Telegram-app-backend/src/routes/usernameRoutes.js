@@ -1,5 +1,8 @@
 const express = require("express");
-const { setPreferredUsername } = require("../controllers/usernameController");
+const {
+  setPreferredUsername,
+  getPreferredUsername,
+} = require("../controllers/usernameController");
 
 const router = express.Router();
 
