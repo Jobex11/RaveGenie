@@ -4,6 +4,8 @@ const bot = require("./bot");
 const dotenv = require("dotenv");
 const cors = require("cors");
 dotenv.config();
+//https://ravegenie-vgm7.onrender.com
+//https://zeenstreet-ten.vercel.app/
 
 const userAuthRoutes = require("./src/routes/userAuthRoutes");
 const usernameRoutes = require("./src/routes/usernameRoutes");
