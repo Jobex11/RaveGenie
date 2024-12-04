@@ -1,8 +1,9 @@
 const { User } = require("../models/database");
 
-// Update a user's shares
+// Update a user's shares based on telegram_id
 exports.updateUserShares = async (req, res) => {
-  const { telegram_id, shares } = req.body;
+  const { telegram_id } = req.params; // Get telegram_id from route params
+  const { shares } = req.body;
 
   if (!telegram_id || shares === undefined) {
     return res
@@ -11,6 +12,7 @@ exports.updateUserShares = async (req, res) => {
   }
 
   try {
+    // Find the user by telegram_id
     const user = await User.findOne({ telegram_id });
 
     if (!user) {
@@ -31,9 +33,32 @@ exports.updateUserShares = async (req, res) => {
   }
 };
 
+// Fetch shares of a specific user based on telegram_id
+exports.getUserShares = async (req, res) => {
+  const { telegram_id } = req.params; // Get telegram_id from route params
+
+  try {
+    // Find the user by telegram_id
+    const user = await User.findOne({ telegram_id });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    res.status(200).json({
+      telegram_id: user.telegram_id,
+      shares: user.shares,
+    });
+  } catch (err) {
+    console.error("Error fetching user shares:", err);
+    res.status(500).json({ error: "Internal server error." });
+  }
+};
+
 // Fetch total shares from all users
 exports.getTotalShares = async (req, res) => {
   try {
+    // Aggregate the total shares across all users
     const totalShares = await User.aggregate([
       { $group: { _id: null, total: { $sum: "$shares" } } },
     ]);

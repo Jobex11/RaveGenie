@@ -35,11 +35,11 @@ exports.authenticateUser = async (req, res) => {
       await user.save();
       return res
         .status(201)
-        .json({ message: "New user created successfully.", user });
+        .json({ message: "New user created successfully 🎉. ", user });
     }
 
     // If user exists, return their data
-    res.status(200).json({ message: "User authenticated successfully.", user });
+    res.status(200).json({ message: "We are glad to have you back 😊", user });
   } catch (err) {
     console.error("Error during authentication:", err);
     res.status(500).json({ error: "Internal server error." });

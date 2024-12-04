@@ -1,15 +1,16 @@
 const express = require("express");
 const {
   updateUserShares,
+  getUserShares,
   getTotalShares,
 } = require("../controllers/shareController");
 
 const router = express.Router();
 
-// Route to update user shares
-router.post("/update", updateUserShares);
+router.post("/update/:telegram_id", updateUserShares);
 
-// Route to get total shares
+router.get("/:telegram_id", getUserShares);
+
 router.get("/total", getTotalShares);
 
 module.exports = router;
