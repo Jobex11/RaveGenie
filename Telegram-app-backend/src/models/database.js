@@ -26,7 +26,7 @@ const userSchema = new mongoose.Schema(
     ogLevel: { type: Number },
     socials: { type: String, default: false },
 
-    shares: { type: Number, default: 0 }, // initialize shares to 0
+    shares: { type: Number, default: 10000 }, // initialize shares to 0
 
     has_joined_telegram: { type: Boolean, default: false },
     has_followed_youtube: { type: Boolean, default: false },
