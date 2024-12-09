@@ -63,3 +63,47 @@ exports.registerWithReferral = async (req, res) => {
     res.status(500).send("An error occurred during registration.");
   }
 };
+
+exports.getNumberOfReferrals = async (req, res) => {
+  const { telegram_id } = req.params;
+
+  try {
+    const user = await User.findOne({ telegram_id });
+    if (!user) return res.status(404).send("User not found.");
+
+    // Assuming `referrals` is an array in the user's schema
+    const referralCount = user.referrals ? user.referrals.length : 0;
+
+    res.status(200).json({
+      telegram_id,
+      referralCount,
+      referrals: user.referrals, // Optional: Include detailed referral information
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("An error occurred while fetching referral data.");
+  }
+};
+
+exports.getUserDetails = async (req, res) => {
+  const { telegram_id } = req.params;
+
+  try {
+    const user = await User.findOne({ telegram_id });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    res.status(200).json({
+      telegram_id: user.telegram_id,
+      accountName: user.accountName,
+      referralCode: user.referralCode,
+      referred_by: user.referred_by || null,
+      referrals: user.referrals || [],
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("An error occurred while fetching user details.");
+  }
+};
