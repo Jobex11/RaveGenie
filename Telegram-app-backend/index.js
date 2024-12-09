@@ -11,7 +11,7 @@ const userAuthRoutes = require("./src/routes/userAuthRoutes");
 const usernameRoutes = require("./src/routes/usernameRoutes");
 const shareRoutes = require("./src/routes/shareRoutes");
 const socialhandleRoutes = require("./src/routes/socialHandleRoutes");
-
+const referralRoutes = require("./src/routes/referralRoutes")
 // ==> MONGODB connection
 const connectDB = require("./src/config/db");
 connectDB();
@@ -27,6 +27,7 @@ app.use("/api/auth", userAuthRoutes);
 app.use("/api/username", usernameRoutes);
 app.use("/api/shares", shareRoutes);
 app.use("/api/socialhandle", socialhandleRoutes);
+app.use("/api/referral", referralRoutes);
 // Health Check Route
 app.get("/", (req, res) => {
   res.status(200).json({ message: "Server is running 🚀" });
