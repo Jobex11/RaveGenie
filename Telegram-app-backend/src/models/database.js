@@ -31,6 +31,9 @@ const userSchema = new mongoose.Schema(
     referred_by: { type: String, default: null },
     referrals: { type: [String], default: [] },
     referralCode: { type: String, unique: true },
+    referralLink: {
+      type: String,
+    },
 
     has_joined_telegram: { type: Boolean, default: false },
     has_followed_youtube: { type: Boolean, default: false },

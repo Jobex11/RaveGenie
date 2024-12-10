@@ -1,32 +1,5 @@
 const crypto = require("crypto");
-
-exports.createUser = async (req, res) => {
-  const { telegram_id, accountName } = req.body;
-
-  try {
-    const existingUser = await User.findOne({ telegram_id });
-    if (existingUser) return res.status(400).send("User already exists.");
-
-    // Generate a unique referral code
-    const referralCode = crypto.randomBytes(4).toString("hex") + telegram_id;
-
-    const newUser = new User({
-      telegram_id,
-      accountName,
-      referralCode,
-    });
-
-    await newUser.save();
-
-    res.status(201).json({
-      message: "User created successfully",
-      referralCode: newUser.referralCode,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send("An error occurred while creating the user.");
-  }
-};
+const User = require("../models/database"); // Ensure your User model is imported correctly
 
 exports.registerWithReferral = async (req, res) => {
   const { telegram_id, accountName, referralCode } = req.body;
@@ -85,25 +58,40 @@ exports.getNumberOfReferrals = async (req, res) => {
   }
 };
 
-exports.getUserDetails = async (req, res) => {
+exports.getUserRef = async (req, res) => {
   const { telegram_id } = req.params;
 
   try {
     const user = await User.findOne({ telegram_id });
+    if (!user) return res.status(404).send("User not found.");
 
-    if (!user) {
-      return res.status(404).json({ message: "User not found." });
-    }
+    // Get the referrer
+    const referrer = await User.findOne({ telegram_id: user.referred_by });
+
+    // Get the list of users referred by this user
+    const referrals = await User.find({ referred_by: telegram_id });
+
+    const referralDetails = referrals.map((referral) => ({
+      telegram_id: referral.telegram_id,
+      gameusername: referral.accountName || "N/A",
+      shares: referral.shares || 0, // Assuming `shares` is a field in your schema
+      referralCode: referral.referralCode,
+    }));
 
     res.status(200).json({
-      telegram_id: user.telegram_id,
-      accountName: user.accountName,
-      referralCode: user.referralCode,
-      referred_by: user.referred_by || null,
-      referrals: user.referrals || [],
+      message: "Referral details retrieved successfully",
+      referrer: referrer
+        ? {
+            telegram_id: referrer.telegram_id,
+            gameusername: referrer.accountName || "N/A",
+            shares: referrer.shares || 0,
+            referralCode: referrer.referralCode,
+          }
+        : null,
+      referrals: referralDetails,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).send("An error occurred while fetching user details.");
+    res.status(500).send("An error occurred while fetching referral data.");
   }
 };
