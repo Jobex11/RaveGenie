@@ -35,13 +35,11 @@ exports.updateUserShares = async (req, res) => {
     });
   } catch (err) {
     console.error("Error updating shares:", err);
-    res.status(500).json(
-      {
-        success:false,
-         message:"An error occured while updating shares",
-         error: err.message
-         }
-    );
+    res.status(500).json({
+      success: false,
+      message: "An error occured while updating shares",
+      error: err.message,
+    });
   }
 };
 
@@ -60,6 +58,9 @@ exports.getUserShares = async (req, res) => {
     res.status(200).json({
       telegram_id: user.telegram_id,
       shares: user.shares,
+      claimedShares: user.claimedShares,
+      ranks: user.ranks,
+      collectedCard: user.collectedCards,
     });
   } catch (err) {
     console.error("Error fetching user shares:", err);

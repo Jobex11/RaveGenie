@@ -32,7 +32,16 @@ const userSchema = new mongoose.Schema(
       type: Map,
       of: Boolean,
       default: {},
-  },
+    },
+    collectedCards: {
+      type: [String],
+      default: [],
+    },
+    ranks: {
+      type: Map,
+      of: String,
+      default: {},
+    },
     referred_by: { type: String, default: null },
     referrals: { type: [String], default: [] },
     referralCode: { type: String, unique: true },
