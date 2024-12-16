@@ -44,7 +44,7 @@ exports.getPreferredUsername = async (req, res) => {
     }
 
     res.status(200).json({
-      message: "Preferred username retrieved successfully.",
+      // message: "Preferred username retrieved successfully.",
       preferred_username: user.accountName,
     });
   } catch (err) {

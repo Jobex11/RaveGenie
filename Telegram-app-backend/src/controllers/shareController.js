@@ -24,12 +24,17 @@ exports.updateUserShares = async (req, res) => {
     await user.save();
 
     res.status(200).json({
+      success: true,
       message: `Shares updated successfully. User now has ${user.shares} shares.`,
       user,
     });
   } catch (err) {
     console.error("Error updating shares:", err);
-    res.status(500).json({ error: "Internal server error." });
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update shares",
+      error: err.message,
+    });
   }
 };
 
