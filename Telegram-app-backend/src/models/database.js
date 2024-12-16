@@ -27,7 +27,12 @@ const userSchema = new mongoose.Schema(
     socials: { type: String, default: false },
 
     shares: { type: Number, default: 10000 },
-
+    claimedShares: {
+      // Object to track share claims by type
+      type: Map,
+      of: Boolean,
+      default: {},
+  },
     referred_by: { type: String, default: null },
     referrals: { type: [String], default: [] },
     referralCode: { type: String, unique: true },
