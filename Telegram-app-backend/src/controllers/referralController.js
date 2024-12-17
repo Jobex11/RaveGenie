@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const crypto = require("crypto");
 const User = require("../models/database"); // Ensure your User model is imported correctly
 
