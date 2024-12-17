@@ -2,37 +2,42 @@ const { User } = require("../models/database");
 
 // Update a user's shares based on telegram_id
 exports.updateUserShares = async (req, res) => {
-  const { telegram_id } = req.params; // Get telegram_id from route params
-  const { shares } = req.body;
+  const { telegram_id } = req.params;
+  const { shares, shareType } = req.body; // Include `shareType` in the request
 
-  if (!telegram_id || shares === undefined) {
+  if (!telegram_id || shares === undefined || !shareType) {
     return res
       .status(400)
-      .json({ error: "telegram_id and shares are required." });
+      .json({ error: "telegram_id, shares, and shareType are required." });
   }
 
   try {
-    // Find the user by telegram_id
     const user = await User.findOne({ telegram_id });
 
     if (!user) {
       return res.status(404).json({ error: "User not found." });
     }
 
-    // Update the user's shares
-    user.shares += shares; // Add the given shares to the user's total
+    if (user.claimedShares.get(shareType)) {
+      return res
+        .status(400)
+        .json({ error: `Shares of type '${shareType}' already claimed.` });
+    }
+
+    // Update the user's shares and claim status for the specific share type
+    user.shares += shares;
+    user.claimedShares.set(shareType, true);
     await user.save();
 
     res.status(200).json({
-      success: true,
-      message: `Shares updated successfully. User now has ${user.shares} shares.`,
+      message: `Hey gamer, you have recieved ${shares} shares for ${shareType} 🎉`,
       user,
     });
   } catch (err) {
     console.error("Error updating shares:", err);
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
-      message: "Failed to update shares",
+      message: "An error occured while updating shares",
       error: err.message,
     });
   }
@@ -53,6 +58,9 @@ exports.getUserShares = async (req, res) => {
     res.status(200).json({
       telegram_id: user.telegram_id,
       shares: user.shares,
+      claimedShares: user.claimedShares,
+      ranks: user.ranks,
+      collectedCard: user.collectedCards,
     });
   } catch (err) {
     console.error("Error fetching user shares:", err);
