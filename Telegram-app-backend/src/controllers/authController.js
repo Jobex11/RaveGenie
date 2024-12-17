@@ -37,7 +37,10 @@ exports.authenticateUser = async (req, res) => {
 
       await user.save();
 
-      const referralLink = `${process.env.APP_URL}/register?ref=${referralCode}`; // Generate referral link
+      //const referralLink = `${process.env.APP_URL}/register?ref=${referralCode}`;
+      // // Generate referral link
+
+      const referralLink = `https://t.me/RaveGenieBot?start=${user.referralCode}`;
       return res.status(201).json({
         message: "New user created successfully 🎉",
         user: {
