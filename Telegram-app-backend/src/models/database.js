@@ -33,6 +33,11 @@ const userSchema = new mongoose.Schema(
       of: Boolean,
       default: {},
     },
+    completedTasks: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "Tasks",                
+      default: [],
+    },    
     collectedCards: {
       type: [String],
       default: [],
