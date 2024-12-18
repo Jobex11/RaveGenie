@@ -1,4 +1,3 @@
-// database.js
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 
@@ -26,7 +25,7 @@ const userSchema = new mongoose.Schema(
     ogLevel: { type: Number },
     socials: { type: String, default: false },
 
-    shares: { type: Number, default: 10000 },
+    shares: { type: Number, default: 100000 },
     claimedShares: {
       // Object to track share claims by type
       type: Map,
@@ -49,6 +48,7 @@ const userSchema = new mongoose.Schema(
     },
     referred_by: { type: String, default: null },
     referrals: { type: [String], default: [] },
+    referralCount: { type: Number, default: 0 }, // Add this fiel
     referralCode: { type: String, unique: true },
     referralLink: {
       type: String,

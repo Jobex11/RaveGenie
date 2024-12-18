@@ -3,6 +3,7 @@ const TelegramBot = require("node-telegram-bot-api");
 const axios = require("axios");
 const dotenv = require("dotenv");
 dotenv.config();
+
 // Replace with your Telegram bot token
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
@@ -13,8 +14,11 @@ const bot = new TelegramBot(TOKEN, { polling: true });
 const app = express();
 
 // Bot command to send welcome message
-bot.onText(/\/start/, async (msg) => {
+bot.onText(/\/start(?: (.+))?/, async (msg, match) => {
   const chatId = msg.chat.id;
+
+  // Extract the referred_by code if present
+  const referredBy = match[1]; // Captures the optional parameter after /start
 
   // User details from Telegram message
   const userData = {
@@ -24,6 +28,7 @@ bot.onText(/\/start/, async (msg) => {
     last_name: msg.from.last_name,
     is_bot: msg.from.is_bot,
     language_code: msg.from.language_code,
+    referred_by: referredBy || null, // Include referred_by if provided
   };
 
   try {
@@ -72,8 +77,3 @@ bot.onText(/\/start/, async (msg) => {
 });
 
 module.exports = bot;
-/*
-web_app: {
-              url: "https://zenstreet-telegram-bot-front-git-13eacb-ptdesigns2022s-projects.vercel.app/",
-            },
-*/

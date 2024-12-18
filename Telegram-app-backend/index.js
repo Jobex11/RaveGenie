@@ -7,6 +7,7 @@ require("./src/cron/taskScheduler.js"); //cron job
 dotenv.config();
 //https://ravegenie-vgm7.onrender.com
 //https://zeenstreet-ten.vercel.app/
+// tg_id 5519602535
 
 const userAuthRoutes = require("./src/routes/userAuthRoutes");
 const usernameRoutes = require("./src/routes/usernameRoutes");
@@ -41,8 +42,6 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ message: "Something went wrong!" });
 });
-
-// Set the port
 const PORT = process.env.PORT || 4000;
 
 // Start the server
