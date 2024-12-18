@@ -43,6 +43,7 @@ const userSchema = new mongoose.Schema(
     },
     referred_by: { type: String, default: null },
     referrals: { type: [String], default: [] },
+    referralCount: { type: Number, default: 0 }, // Add this fiel
     referralCode: { type: String, unique: true },
     referralLink: {
       type: String,

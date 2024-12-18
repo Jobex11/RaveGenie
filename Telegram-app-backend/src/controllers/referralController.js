@@ -6,25 +6,21 @@ exports.registerWithReferral = async (req, res) => {
   const { telegram_id, accountName, referralCode } = req.body;
 
   try {
-    // Check if referral code is valid
     const referringUser = await User.findOne({ referralCode });
     if (!referringUser) return res.status(400).send("Invalid referral code.");
 
-    // Check if the user already exists
     const existingUser = await User.findOne({ telegram_id });
     if (existingUser) return res.status(400).send("User already exists.");
 
-    // Create new user
     const newUser = new User({
       telegram_id,
       accountName,
-      referred_by: referringUser.telegram_id, // Set who referred this user
-      referralCode: crypto.randomBytes(4).toString("hex") + telegram_id, // Generate new referral code
+      referred_by: referringUser.telegram_id,
+      referralCode: crypto.randomBytes(4).toString("hex") + telegram_id,
     });
 
     await newUser.save();
 
-    // Update the referring user's referrals list
     referringUser.referrals.push(telegram_id);
     await referringUser.save();
 
@@ -47,10 +43,12 @@ exports.getNumberOfReferrals = async (req, res) => {
 
     const referralCount = user.referrals ? user.referrals.length : 0;
 
+    user.referralCount = referralCount;
+    await user.save();
+
     res.status(200).json({
       telegram_id,
       referralCount,
-      referrals: user.referrals,
     });
   } catch (error) {
     console.error(error);
@@ -65,32 +63,28 @@ exports.getUserRef = async (req, res) => {
     const user = await User.findOne({ telegram_id });
     if (!user) return res.status(404).send("User not found.");
 
-    const referrer = await User.findOne({ telegram_id: user.referred_by });
-
-    const referrals = await User.find({ referred_by: telegram_id });
+    const referrals = await User.find({ referred_by: user.referralCode });
 
     const referralDetails = referrals.map((referral) => ({
       telegram_id: referral.telegram_id,
-      gameusername: referral.accountName || "N/A",
+      username: referral.username || "N/A",
+      referralCode: referral.referralCode || "N/A",
       shares: referral.shares || 0,
-      referralCode: referral.referralCode,
+      telegramImage: referral.additional_details?.photo_url || "N/A", // Adjust field based on schema
+      accountName: referral.accountName || "N/A",
     }));
 
+    user.referrals = referralDetails.map((referral) => referral.telegram_id); // Store only telegram IDs in `referrals` array
+    await user.save();
     res.status(200).json({
-      message: "Referral details retrieved successfully",
-      referrer: referrer
-        ? {
-            telegram_id: referrer.telegram_id,
-            gameusername: referrer.accountName || "N/A",
-            shares: referrer.shares || 0,
-            referralCode: referrer.referralCode,
-          }
-        : null,
+      message: "Referral details retrieved and updated successfully",
       referrals: referralDetails,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).send("An error occurred while fetching referral data.");
+    res
+      .status(500)
+      .send("An error occurred while fetching and updating referral data.");
   }
 };
 
