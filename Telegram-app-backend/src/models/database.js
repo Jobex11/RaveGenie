@@ -25,7 +25,7 @@ const userSchema = new mongoose.Schema(
     ogLevel: { type: Number },
     socials: { type: String, default: false },
 
-    shares: { type: Number, default: 10000 },
+    shares: { type: Number, default: 100000 },
     claimedShares: {
       // Object to track share claims by type
       type: Map,
