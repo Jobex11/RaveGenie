@@ -9,7 +9,6 @@ exports.authenticateUser = async (req, res) => {
     last_name,
     is_bot,
     language_code,
-    referralCode, // Optional: referral code if the user signed up via a referral link
   } = req.body;
 
   if (!telegram_id || !username) {
@@ -19,34 +18,10 @@ exports.authenticateUser = async (req, res) => {
   }
 
   try {
-    // Check if the user already exists
     let user = await User.findOne({ telegram_id });
 
-    // If user does not exist, create a new user
     if (!user) {
-      const generatedReferralCode =
-        crypto.randomBytes(4).toString("hex") + telegram_id; // Generate referral code
-
-      // Determine referral details if a referral code is provided
-      let referredBy = null;
-      if (referralCode) {
-        const referrer = await User.findOne({ referralCode });
-        if (referrer) {
-          referredBy = {
-            telegram_id: referrer.telegram_id,
-            username: referrer.username,
-            referralCode: referrer.referralCode,
-          };
-
-          // Add the new user to the referrer's referrals list
-          referrer.referrals.push(telegram_id);
-          await referrer.save();
-        } else {
-          console.warn(`Referral code ${referralCode} is invalid.`);
-        }
-      }
-
-      // Create the new user
+      const referralCode = crypto.randomBytes(4).toString("hex") + telegram_id; // Generate referral code
       user = new User({
         telegram_id,
         username,
@@ -54,8 +29,8 @@ exports.authenticateUser = async (req, res) => {
         last_name,
         is_bot,
         language_code,
-        referralCode: generatedReferralCode,
-        referred_by: referredBy,
+        referralCode,
+        referred_by: req.body.referred_by || null,
       });
 
       await user.save();
@@ -70,15 +45,15 @@ exports.authenticateUser = async (req, res) => {
       });
     }
 
-    // If the user exists but doesn't have a referral code, generate one
     if (!user.referralCode) {
-      user.referralCode = crypto.randomBytes(4).toString("hex") + telegram_id;
+      //user.referralCode = crypto.randomBytes(4).toString("hex") + telegram_id;
+      user.referralCode = `ref_${telegram_id}_${Date.now()}`;
+
       await user.save();
     }
 
     const referralLink = `https://t.me/RaveGenieBot?start=${user.referralCode}`;
 
-    // Return user data for an existing user
     res.status(200).json({
       message: "We are glad to have you back 😊",
       user: {
@@ -114,6 +89,7 @@ exports.authenticateUser = async (req, res) => {
     last_name,
     is_bot,
     language_code,
+    referralCode, 
   } = req.body;
 
   if (!telegram_id || !username) {
@@ -126,7 +102,26 @@ exports.authenticateUser = async (req, res) => {
     let user = await User.findOne({ telegram_id });
 
     if (!user) {
-      const referralCode = crypto.randomBytes(4).toString("hex") + telegram_id; // Generate referral code
+      const generatedReferralCode =
+        crypto.randomBytes(4).toString("hex") + telegram_id; 
+
+      let referredBy = null;
+      if (referralCode) {
+        const referrer = await User.findOne({ referralCode });
+        if (referrer) {
+          referredBy = {
+            telegram_id: referrer.telegram_id,
+            username: referrer.username,
+            referralCode: referrer.referralCode,
+          };
+
+          referrer.referrals.push(telegram_id);
+          await referrer.save();
+        } else {
+          console.warn(`Referral code ${referralCode} is invalid.`);
+        }
+      }
+
       user = new User({
         telegram_id,
         username,
@@ -134,7 +129,8 @@ exports.authenticateUser = async (req, res) => {
         last_name,
         is_bot,
         language_code,
-        referralCode,
+        referralCode: generatedReferralCode,
+        referred_by: referredBy,
       });
 
       await user.save();
