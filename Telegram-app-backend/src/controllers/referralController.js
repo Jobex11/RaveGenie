@@ -197,7 +197,7 @@ exports.getReferralCode = async (req, res) => {
   }
 };
 
-//==>>GET REFERRAL LINK
+//==>> GET REFERRAL LINK
 exports.getReferralLink = async (req, res) => {
   const { telegram_id } = req.params;
 
@@ -205,7 +205,35 @@ exports.getReferralLink = async (req, res) => {
     const user = await User.findOne({ telegram_id });
     if (!user) return res.status(404).send("User not found.");
 
-    // Use deep linking format
+    // Generate the referral link
+    const referralLink = `https://t.me/RaveGenieBot?start=${user.referralCode}`;
+
+    // Save the referral link to the database if not already saved
+    if (user.referralLink !== referralLink) {
+      user.referralLink = referralLink;
+      await user.save();
+    }
+
+    res.status(200).json({
+      message: "Referral link retrieved and saved successfully.",
+      referralLink,
+    });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .send("An error occurred while retrieving and saving the referral link.");
+  }
+};
+
+/*
+exports.getReferralLink = async (req, res) => {
+  const { telegram_id } = req.params;
+
+  try {
+    const user = await User.findOne({ telegram_id });
+    if (!user) return res.status(404).send("User not found.");
+
     const referralLink = `https://t.me/RaveGenieBot?start=${user.referralCode}`;
     res.status(200).json({
       message: "Referral link retrieved successfully.",
@@ -218,3 +246,5 @@ exports.getReferralLink = async (req, res) => {
       .send("An error occurred while retrieving the referral link.");
   }
 };
+
+*/
