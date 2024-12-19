@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const { User } = require("../models/database");
 
+//==>> REGISTER NEW USER
 exports.registerWithReferral = async (req, res) => {
   const { telegram_id, accountName, referralCode } = req.body;
 
@@ -34,6 +35,91 @@ exports.registerWithReferral = async (req, res) => {
   }
 };
 
+//==>> GET TIER1
+exports.tier1 = async (req, res) => {
+  const { telegram_id } = req.params;
+
+  try {
+    const user = await User.findOne({ telegram_id });
+    if (!user) return res.status(404).send("User not found.");
+
+    const tier1 = await User.find({ referred_by: user.referralCode });
+
+    const referralDetails = tier1.map((referral) => ({
+      telegram_id: referral.telegram_id, //==> to get avatar_url of referrals
+      username: referral.username || "N/A",
+      referralCode: referral.referralCode || "N/A",
+      shares: referral.shares || 0,
+      accountName: referral.accountName || "N/A",
+      dateJoined: referral.createdAt
+        ? referral.createdAt.toISOString().split("T")[0]
+        : "Unknown",
+    }));
+
+    user.tier1 = referralDetails.map((referral) => referral.telegram_id); // Store only telegram IDs in `referrals` array
+    await user.save();
+    res.status(200).json({
+      message: "Tier1: Your immediate referrals retrieved successfully",
+      tier1: referralDetails,
+    });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .send("An error occurred while fetching and updating referral data.");
+  }
+};
+
+//==>> GET TIER2
+exports.tier2 = async (req, res) => {
+  const { telegram_id } = req.params;
+
+  try {
+    const user = await User.findOne({ telegram_id });
+    if (!user) return res.status(404).send("User not found.");
+
+    const tier1 = await User.find({ referred_by: user.referralCode });
+    if (tier1.length === 0) {
+      return res.status(200).json({
+        message:
+          "Tier2: No Tier 1 referrals found, so no Tier 2 referrals exist.",
+        tier2: [],
+      });
+    }
+
+    const tier2 = await User.find({
+      referred_by: { $in: tier1.map((referral) => referral.referralCode) },
+    });
+
+    const tier2Details = tier2.map((referral) => ({
+      telegram_id: referral.telegram_id, // Get avatar_url or Telegram ID
+      username: referral.username || "N/A",
+      referralCode: referral.referralCode || "N/A",
+      shares: referral.shares || 0,
+      accountName: referral.accountName || "N/A",
+      dateJoined: referral.createdAt
+        ? referral.createdAt.toISOString().split("T")[0]
+        : "Unknown",
+    }));
+
+    user.tier2 = tier2.map((referral) => referral.telegram_id);
+    await user.save();
+
+    res.status(200).json({
+      message: "Tier2: Referrals of your referrals retrieved successfully",
+      tier2: tier2Details,
+    });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .send(
+        "An error occurred while fetching and updating Tier 2 referral data."
+      );
+  }
+};
+
+//==>> GET USERS NUMBER OF REFERRALS
 exports.getNumberOfReferrals = async (req, res) => {
   const { telegram_id } = req.params;
 
@@ -56,6 +142,7 @@ exports.getNumberOfReferrals = async (req, res) => {
   }
 };
 
+//==>>  GET REFERRALS DETAILS
 exports.getUserRef = async (req, res) => {
   const { telegram_id } = req.params;
 
@@ -66,12 +153,14 @@ exports.getUserRef = async (req, res) => {
     const referrals = await User.find({ referred_by: user.referralCode });
 
     const referralDetails = referrals.map((referral) => ({
-      telegram_id: referral.telegram_id,
+      telegram_id: referral.telegram_id, //==> to get avatar_url of referrals
       username: referral.username || "N/A",
       referralCode: referral.referralCode || "N/A",
       shares: referral.shares || 0,
-      telegramImage: referral.additional_details?.photo_url || "N/A", // Adjust field based on schema
       accountName: referral.accountName || "N/A",
+      dateJoined: referral.createdAt
+        ? referral.createdAt.toISOString().split("T")[0]
+        : "Unknown",
     }));
 
     user.referrals = referralDetails.map((referral) => referral.telegram_id); // Store only telegram IDs in `referrals` array
@@ -88,6 +177,7 @@ exports.getUserRef = async (req, res) => {
   }
 };
 
+//==> GET REFERRALCODE
 exports.getReferralCode = async (req, res) => {
   const { telegram_id } = req.params;
 
@@ -107,6 +197,7 @@ exports.getReferralCode = async (req, res) => {
   }
 };
 
+//==>>GET REFERRAL LINK
 exports.getReferralLink = async (req, res) => {
   const { telegram_id } = req.params;
 
