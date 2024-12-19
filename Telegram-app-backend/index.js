@@ -2,9 +2,12 @@
 const express = require("express");
 const bot = require("./bot");
 const dotenv = require("dotenv");
+const http = require("http");
 const cors = require("cors");
+const { initializeSocket } = require("./src/config/socket.io.js");
 require("./src/cron/taskScheduler.js"); //cron job
 dotenv.config();
+
 //https://ravegenie-vgm7.onrender.com
 //https://zeenstreet-ten.vercel.app/
 // tg_id 5519602535
@@ -15,6 +18,7 @@ const shareRoutes = require("./src/routes/shareRoutes");
 const socialhandleRoutes = require("./src/routes/socialHandleRoutes");
 const referralRoutes = require("./src/routes/referralRoutes");
 const taskRoutes = require("./src/routes/taskRoutes");
+const notificationRoutes = require("./src/routes/notificationRoutes.js");
 // ==> MONGODB connection
 const connectDB = require("./src/config/db");
 connectDB();
@@ -23,7 +27,9 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-app.use(cors());
+const server = http.createServer(app);
+
+app.use(cors());  
 
 // ==> YOUR API ROUTES
 app.use("/api/auth", userAuthRoutes);
@@ -32,11 +38,12 @@ app.use("/api/shares", shareRoutes);
 app.use("/api/socialhandle", socialhandleRoutes);
 app.use("/api/referral", referralRoutes);
 app.use("/api/tasks", taskRoutes);
+app.use("/api/notifications", notificationRoutes);
 // Health Check Route
 app.get("/", (req, res) => {
   res.status(200).json({ message: "Server is running 🚀" });
 });
-
+initializeSocket(server);
 // Error Handling Middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -45,6 +52,6 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 4000;
 
 // Start the server
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT} 🟢`);
 });

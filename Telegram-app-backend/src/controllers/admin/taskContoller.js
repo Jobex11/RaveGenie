@@ -1,10 +1,13 @@
 const cloudinary = require("../../bucket/cloudinary.js");
-const multer = require("multer");
 const { User } = require("../../models/database.js");
 const Tasks = require("../../models/tasks");
+const { getIoInstance } = require("../../config/socket.io.js");
+const multer = require("multer");
 
 // Multer configuration
 const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
 const uploadImageToCloudinary = (file) => {
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
@@ -12,15 +15,18 @@ const uploadImageToCloudinary = (file) => {
       (error, result) => {
         if (error) {
           console.error("Cloudinary upload error:", error);
-          return reject(new Error("Failed to upload image to Cloudinary"));
+          reject(new Error("Failed to upload image to Cloudinary"));
+        } else {
+          resolve(result);
         }
-        resolve(result);
       }
     );
     stream.end(file.buffer);
   });
 };
 
+// Admin uploads a new task
+   upload.single("image")
 // Admin uploads a new task
 exports.createTasks = async (req, res) => {
   const {
@@ -78,6 +84,8 @@ exports.createTasks = async (req, res) => {
     console.log("Saving task to database:", newTask);
 
     await newTask.save();
+    const io = getIoInstance();
+    io.emit("taskCreated", { message: "A new task was created!", newTask });  
     return res
       .status(201)
       .json({ message: "Task created successfully", task: newTask });
