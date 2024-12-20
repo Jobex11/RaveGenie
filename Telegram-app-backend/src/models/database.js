@@ -7,7 +7,7 @@ dotenv.config();
 // Define User Schema
 const userSchema = new mongoose.Schema(
   {
-    chat_id:{ type: String },
+    chat_id: { type: String },
     telegram_id: { type: String, required: true, unique: true },
     username: { type: String },
     additional_details: { type: Object },
@@ -55,6 +55,7 @@ const userSchema = new mongoose.Schema(
     referralLink: {
       type: String,
     },
+    claimReferrals_shares: { type: Number, default: 0 }, // Claimable referral shares
     tier1: { type: [String], default: [] },
     tier2: { type: [String], default: [] },
 

@@ -226,25 +226,57 @@ exports.getReferralLink = async (req, res) => {
   }
 };
 
-/*
-exports.getReferralLink = async (req, res) => {
+// ==>>> CLAIM REFERRAL SHARES
+exports.claimReferralShares = async (req, res) => {
   const { telegram_id } = req.params;
 
   try {
+    // Find the user by telegram_id
     const user = await User.findOne({ telegram_id });
     if (!user) return res.status(404).send("User not found.");
 
-    const referralLink = `https://t.me/RaveGenieBot?start=${user.referralCode}`;
-    res.status(200).json({
-      message: "Referral link retrieved successfully.",
-      referralLink,
-    });
+    // Calculate the number of new referrals
+    const currentReferralCount = user.referrals ? user.referrals.length : 0;
+    const claimedReferralCount = user.referralCount || 0; // Previously claimed referrals
+    const newReferrals = currentReferralCount - claimedReferralCount;
+
+    // Update claimable shares based on new referrals
+    if (newReferrals > 0) {
+      const newClaimableShares = newReferrals * 1000;
+      user.claimReferrals_shares =
+        (user.claimReferrals_shares || 0) + newClaimableShares;
+
+      // Update the stored referral count
+      user.referralCount = currentReferralCount;
+
+      // Save the updated user document
+      await user.save();
+    }
+
+    // Check if the user has claimable shares
+    const claimableShares = user.claimReferrals_shares || 0;
+    if (claimableShares > 0) {
+      // Add claimable shares to the total shares
+      user.shares += claimableShares;
+
+      // Reset claimable shares after claiming
+      user.claimReferrals_shares = 0;
+
+      // Save the updated user document
+      await user.save();
+
+      res.status(200).json({
+        message: "Referral shares claimed successfully.",
+        telegram_id,
+        addedShares: claimableShares,
+        totalShares: user.shares,
+        currentReferralCount,
+      });
+    } else {
+      res.status(400).send("No claimable referral shares at the moment.");
+    }
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .send("An error occurred while retrieving the referral link.");
+    res.status(500).send("An error occurred while claiming referral shares.");
   }
 };
-
-*/
