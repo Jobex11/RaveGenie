@@ -1,4 +1,3 @@
-// Import required modules
 const express = require("express");
 const bot = require("./bot");
 const dotenv = require("dotenv");

@@ -34,9 +34,9 @@ const userSchema = new mongoose.Schema(
     },
     completedTasks: {
       type: [mongoose.Schema.Types.ObjectId],
-      ref: "Tasks",                
+      ref: "Tasks",
       default: [],
-    },    
+    },
     collectedCards: {
       type: [String],
       default: [],
@@ -46,14 +46,19 @@ const userSchema = new mongoose.Schema(
       of: String,
       default: {},
     },
+
+    //referral schemas
     referred_by: { type: String, default: null },
     referrals: { type: [String], default: [] },
-    referralCount: { type: Number, default: 0 }, // Add this fiel
+    referralCount: { type: Number, default: 0 },
     referralCode: { type: String, unique: true },
     referralLink: {
       type: String,
     },
+    tier1: { type: [String], default: [] },
+    tier2: { type: [String], default: [] },
 
+    //social schemas
     has_joined_telegram: { type: Boolean, default: false },
     has_followed_youtube: { type: Boolean, default: false },
     has_followed_x: { type: Boolean, default: false },

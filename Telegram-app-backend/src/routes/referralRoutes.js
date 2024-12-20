@@ -9,4 +9,7 @@ router.get("/ref-details/:telegram_id", referral.getUserRef);
 router.get("/referral-code/:telegram_id", referral.getReferralCode);
 router.get("/referral-link/:telegram_id", referral.getReferralLink);
 
+router.get("/tier1/:telegram_id", referral.tier1);
+router.get("/tier2/:telegram_id", referral.tier2);
+
 module.exports = router;
