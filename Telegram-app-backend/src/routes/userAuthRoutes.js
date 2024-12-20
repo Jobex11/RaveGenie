@@ -3,6 +3,7 @@ const {
   authenticateUser,
   getAllUsers,
   getUsersById,
+  deleteUserByChatId,
 } = require("../controllers/authController");
 
 const router = express.Router();
