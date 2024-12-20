@@ -1,10 +1,13 @@
+const { User } = require("../../models/database"); // Your user model
 const cloudinary = require("../../bucket/cloudinary.js");
-const { User } = require("../../models/database.js");
-const Tasks = require("../../models/tasks");
-const { getIoInstance } = require("../../config/socket.io.js");
 const multer = require("multer");
+const TelegramBot = require("node-telegram-bot-api");
+const Tasks = require("../../models/tasks.js");
 
-// Multer configuration
+
+const TOKEN = process.env.TELEGRAM_BOT_TOKEN; // Your Telegram Bot Token
+const bot = new TelegramBot(TOKEN);
+
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
@@ -25,9 +28,6 @@ const uploadImageToCloudinary = (file) => {
   });
 };
 
-// Admin uploads a new task
-   upload.single("image")
-// Admin uploads a new task
 exports.createTasks = async (req, res) => {
   const {
     title,
@@ -35,41 +35,30 @@ exports.createTasks = async (req, res) => {
     taskType,
     category,
     diminishingRewards,
-    countdown,
     baseReward,
   } = req.body;
 
-  console.log("Request Body:", req.body);
-  console.log("Uploaded File:", req.file);
-
-  // Validate input fields
   if (!title || !taskUrl || !req.file || !baseReward) {
     return res.status(400).json({
       success: false,
       message: "All fields are required (including an image)",
     });
   }
-
-  if (!["one-time", "recurring"].includes(taskType)) {
-    return res.status(400).json({ error: "Invalid task type" });
+  if (!req.body.countdown) {
+    return res.status(400).json({ error: "Countdown is required" });
   }
-
-  if (
-    !["Special", "Daily", "Events", "Referral", "Partners", "Social"].includes(
-      category
-    )
-  ) {
-    return res.status(400).json({ error: "Invalid category" });
+  
+  const countdown = parseInt(req.body.countdown, 10);
+  if (isNaN(countdown)) {
+    return res.status(400).json({ error: "Countdown must be a number" });
   }
 
   try {
     // Upload image to Cloudinary
-    console.log("Uploading image to Cloudinary...");
     const cloudinaryResult = await uploadImageToCloudinary(req.file);
     const imageUrl = cloudinaryResult.secure_url;
-    console.log("Cloudinary Upload Success:", imageUrl);
 
-    // Create and save the new task
+    // Save task in the database
     const newTask = new Tasks({
       title,
       taskUrl,
@@ -77,18 +66,44 @@ exports.createTasks = async (req, res) => {
       category,
       diminishingRewards,
       image: imageUrl,
-      countdown: countdown || 0, // Optional countdown
+      countdown: countdown || 0,
       baseReward: baseReward || 100,
     });
 
-    console.log("Saving task to database:", newTask);
-
     await newTask.save();
-    const io = getIoInstance();
-    io.emit("taskCreated", { message: "A new task was created!", newTask });  
-    return res
-      .status(201)
-      .json({ message: "Task created successfully", task: newTask });
+    // Send Telegram notification
+    const users = await User.find({});
+
+    users.forEach((user) => {
+      if (user.chat_id) {
+        const notificationMessage = `Hey ${
+          user.username || "there"
+        }, a new Task is available! 🎉 Go and perform the tasks to claim your reward! 🚀`;
+        bot.sendMessage(
+          user.chat_id,
+          notificationMessage,
+          (options = {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "Perfom Task",
+                    web_app: {
+                      url: "https://zeenstreet-ten.vercel.app/tasks",
+                    },
+                  },
+                ],
+              ],
+            },
+          })
+        );
+      }
+    });
+
+    return res.status(201).json({
+      message: "Task created successfully, and users have been notified.",
+      task: newTask,
+    });
   } catch (error) {
     console.error("Error:", error.message);
     return res.status(500).json({
@@ -101,7 +116,7 @@ exports.createTasks = async (req, res) => {
 
 exports.getTasks = async (req, res) => {
   try {
-    const tasks = await Tasks.find();
+    const tasks = await Tasks.find().sort({ createdAt: -1 });
 
     const tasksWithCountdown = tasks.map((task) => {
       const now = Date.now();

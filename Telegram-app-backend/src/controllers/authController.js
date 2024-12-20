@@ -8,6 +8,7 @@ exports.authenticateUser = async (req, res) => {
     first_name,
     last_name,
     is_bot,
+    chat_id,
     language_code,
   } = req.body;
 
@@ -28,6 +29,7 @@ exports.authenticateUser = async (req, res) => {
         first_name,
         last_name,
         is_bot,
+        chat_id,
         language_code,
         referralCode,
         referred_by: req.body.referred_by || null,
@@ -68,11 +70,43 @@ exports.authenticateUser = async (req, res) => {
 };
 
 exports.getAllUsers = async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+
   try {
-    const users = await User.find();
-    res.status(200).json({ users });
+    const users = await User.find()
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+    const totalUsers = await User.countDocuments();
+
+    res
+      .status(200)
+      .json({
+        users: users,
+        totalUsers: totalUsers,
+        totalPages: Math.ceil(totalUsers / limit),
+        currentPage: page,
+      });
   } catch (err) {
     console.error("Error fetching users:", err);
+    res.status(500).json({ error: "Internal server error." });
+  }
+};
+
+exports.getUsersById = async (req, res) => {
+  const { telegram_id } = req.params; // Ensure `telegram_id` is extracted from the request body
+  try {
+    // Use `findOne` to fetch a single user by `telegram_id`
+    const user = await User.findOne({ telegram_id });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    res.status(200).json({ user });
+  } catch (err) {
+    console.error("Error fetching user:", err);
     res.status(500).json({ error: "Internal server error." });
   }
 };

@@ -2,7 +2,11 @@ const cloudinary = require("../../bucket/cloudinary.js");
 const Notifications = require("../../models/notifications.js"); // Assuming a Notifications model
 const { getIoInstance } = require("../../config/socket.io.js");
 const multer = require("multer");
+const TelegramBot = require("node-telegram-bot-api");
+const { User } = require("../../models/database.js");
 
+const TOKEN = process.env.TELEGRAM_BOT_TOKEN; // Your Telegram Bot Token
+const bot = new TelegramBot(TOKEN);
 // Multer config
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
@@ -21,7 +25,7 @@ const uploadImageToCloudinary = (file) => {
       }
     );
     stream.end(file.buffer);
-  });
+  }); 
 };
 
 // Admin creates a notification
@@ -59,11 +63,32 @@ exports.createNotification = async (req, res) => {
     await newNotification.save();
     console.log("Notification saved successfully");
 
-    // Emit socket event
-    const io = getIoInstance();
-    io.emit("notificationCreated", {
-      message: "A new notification was created!",
-      newNotification,
+    const users = await User.find({});
+
+    users.forEach((user) => {
+      if (user.chat_id) {
+        const notificationMessage = `Hey ${
+          user.username || "there"
+        }, a new Notification is available! 🎉 Go check it out 🚀`;
+        bot.sendMessage(
+          user.chat_id,
+          notificationMessage,
+          (options = {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "Check latest Notifications",
+                    web_app: {
+                      url: "https://zeenstreet-ten.vercel.app/notifications",
+                    },
+                  },
+                ],
+              ],
+            },
+          })
+        );
+      }
     });
 
     return res.status(201).json({
@@ -89,7 +114,7 @@ exports.getNotifications = async (req, res) => {
     const notifications = await Notifications.find()
       .skip((page - 1) * limit)
       .limit(limit)
-      .sort({createdAt: - 1})
+      .sort({ createdAt: -1 });
 
     const totalNotifications = await Notifications.countDocuments();
 
@@ -122,13 +147,14 @@ exports.getNotifications = async (req, res) => {
   }
 };
 
-
 exports.deleteNotification = async (req, res) => {
-    try {
-      await Notifications.deleteMany({});
-      res.status(200).json({ message: "All notification deleted successfully" });
-    } catch (error) {
-      console.error("Error deleting notification:", error);
-      res.status(500).json({ message: "An error occurred while deleting notification" });
-    }
-  };
+  try {
+    await Notifications.deleteMany({});
+    res.status(200).json({ message: "All notification deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting notification:", error);
+    res
+      .status(500)
+      .json({ message: "An error occurred while deleting notification" });
+  }
+};

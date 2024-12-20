@@ -28,6 +28,7 @@ bot.onText(/\/start(?: (.+))?/, async (msg, match) => {
     last_name: msg.from.last_name,
     is_bot: msg.from.is_bot,
     language_code: msg.from.language_code,
+    chat_id: chatId,
     referred_by: referredBy || null, // Include referred_by if provided
   };
 

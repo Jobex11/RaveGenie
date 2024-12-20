@@ -2,9 +2,10 @@
 const express = require("express");
 const bot = require("./bot");
 const dotenv = require("dotenv");
-const http = require("http");
 const cors = require("cors");
-const { initializeSocket } = require("./src/config/socket.io.js");
+const { createServer } = require("http");
+
+
 require("./src/cron/taskScheduler.js"); //cron job
 dotenv.config();
 
@@ -27,9 +28,9 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-const server = http.createServer(app);
+const httpServer = createServer(app);
 
-app.use(cors());  
+app.use(cors());
 
 // ==> YOUR API ROUTES
 app.use("/api/auth", userAuthRoutes);
@@ -43,7 +44,8 @@ app.use("/api/notifications", notificationRoutes);
 app.get("/", (req, res) => {
   res.status(200).json({ message: "Server is running 🚀" });
 });
-initializeSocket(server);
+
+
 // Error Handling Middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -52,6 +54,8 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 4000;
 
 // Start the server
-server.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT} 🟢`);
 });
+
+

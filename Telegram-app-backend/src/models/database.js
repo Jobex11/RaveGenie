@@ -7,6 +7,7 @@ dotenv.config();
 // Define User Schema
 const userSchema = new mongoose.Schema(
   {
+    chat_id:{ type: String },
     telegram_id: { type: String, required: true, unique: true },
     username: { type: String },
     additional_details: { type: Object },
@@ -15,7 +16,6 @@ const userSchema = new mongoose.Schema(
     last_name: { type: String },
     is_bot: { type: Boolean, default: false },
     language_code: { type: String },
-
     accountName: { type: String },
 
     firstContact: { type: Date },
