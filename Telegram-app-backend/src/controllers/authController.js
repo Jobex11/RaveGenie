@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const { User } = require("../models/database");
 
+//==> GET DETAILS OF USER AT FIRST LOGIN
 exports.authenticateUser = async (req, res) => {
   const {
     telegram_id,
@@ -69,6 +70,7 @@ exports.authenticateUser = async (req, res) => {
   }
 };
 
+//=>GET ALL USERS
 exports.getAllUsers = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
@@ -80,20 +82,19 @@ exports.getAllUsers = async (req, res) => {
       .sort({ createdAt: -1 });
     const totalUsers = await User.countDocuments();
 
-    res
-      .status(200)
-      .json({
-        users: users,
-        totalUsers: totalUsers,
-        totalPages: Math.ceil(totalUsers / limit),
-        currentPage: page,
-      });
+    res.status(200).json({
+      users: users,
+      totalUsers: totalUsers,
+      totalPages: Math.ceil(totalUsers / limit),
+      currentPage: page,
+    });
   } catch (err) {
     console.error("Error fetching users:", err);
     res.status(500).json({ error: "Internal server error." });
   }
 };
 
+//==> GETSERBYID
 exports.getUsersById = async (req, res) => {
   const { telegram_id } = req.params; // Ensure `telegram_id` is extracted from the request body
   try {
@@ -111,102 +112,20 @@ exports.getUsersById = async (req, res) => {
   }
 };
 
-/*
-const crypto = require("crypto");
-const { User } = require("../models/database");
-
-exports.authenticateUser = async (req, res) => {
-  const {
-    telegram_id,
-    username,
-    first_name,
-    last_name,
-    is_bot,
-    language_code,
-    referralCode, 
-  } = req.body;
-
-  if (!telegram_id || !username) {
-    return res
-      .status(400)
-      .json({ error: "telegram_id and username are required." });
-  }
+// ==> DELETE CHAT HISTROY
+exports.deleteUserByChatId = async (req, res) => {
+  const { chat_id } = req.params;
 
   try {
-    let user = await User.findOne({ telegram_id });
+    const user = await User.findOneAndDelete({ chat_id });
 
     if (!user) {
-      const generatedReferralCode =
-        crypto.randomBytes(4).toString("hex") + telegram_id; 
-
-      let referredBy = null;
-      if (referralCode) {
-        const referrer = await User.findOne({ referralCode });
-        if (referrer) {
-          referredBy = {
-            telegram_id: referrer.telegram_id,
-            username: referrer.username,
-            referralCode: referrer.referralCode,
-          };
-
-          referrer.referrals.push(telegram_id);
-          await referrer.save();
-        } else {
-          console.warn(`Referral code ${referralCode} is invalid.`);
-        }
-      }
-
-      user = new User({
-        telegram_id,
-        username,
-        first_name,
-        last_name,
-        is_bot,
-        language_code,
-        referralCode: generatedReferralCode,
-        referred_by: referredBy,
-      });
-
-      await user.save();
-
-      const referralLink = `https://t.me/RaveGenieBot?start=${user.referralCode}`;
-      return res.status(201).json({
-        message: "New user created successfully 🎉",
-        user: {
-          ...user.toObject(),
-          referralLink,
-        },
-      });
+      return res.status(404).json({ message: "User not found." });
     }
 
-    if (!user.referralCode) {
-      user.referralCode = crypto.randomBytes(4).toString("hex") + telegram_id;
-      await user.save();
-    }
-
-    const referralLink = `https://t.me/RaveGenieBot?start=${user.referralCode}`;
-
-    res.status(200).json({
-      message: "We are glad to have you back 😊",
-      user: {
-        ...user.toObject(),
-        referralLink,
-      },
-    });
+    res.status(200).json({ message: "User data deleted successfully." });
   } catch (err) {
-    console.error("Error during authentication:", err);
+    console.error("Error deleting user:", err);
     res.status(500).json({ error: "Internal server error." });
   }
 };
-
-exports.getAllUsers = async (req, res) => {
-  try {
-    const users = await User.find();
-    res.status(200).json({ users });
-  } catch (err) {
-    console.error("Error fetching users:", err);
-    res.status(500).json({ error: "Internal server error." });
-  }
-};
-
-*/

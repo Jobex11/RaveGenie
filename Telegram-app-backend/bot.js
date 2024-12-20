@@ -77,4 +77,20 @@ bot.onText(/\/start(?: (.+))?/, async (msg, match) => {
   bot.sendMessage(chatId, message, options);
 });
 
+bot.on("message", async (msg) => {
+  if (msg?.service_message?.type === "delete_chat_history") {
+    const chatId = msg.chat.id;
+
+    try {
+      // Remove user from database based on `chat_id` or `telegram_id`
+      await axios.delete(
+        `https://ravegenie-vgm7.onrender.com/api/auth/${chatId}`
+      );
+      console.log(`Cleared user data for chatId: ${chatId}`);
+    } catch (error) {
+      console.error("Error clearing user data:", error.message);
+    }
+  }
+});
+
 module.exports = bot;
