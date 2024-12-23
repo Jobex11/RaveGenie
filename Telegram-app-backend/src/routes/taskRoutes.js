@@ -1,7 +1,7 @@
 const express = require("express");
 const {
-  getTasks,
-  createTasks,
+  getOneTimeTasks,
+  createOneTimeTasks,
   deleteTasks,
   completedTasks,
 } = require("../controllers/admin/taskContoller");
@@ -11,8 +11,8 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 const router = express.Router();
 
-router.get("/", getTasks);
-router.post("/create", upload.single("image"), createTasks);
+router.get("/", getOneTimeTasks);
+router.post("/create", upload.single("image"), createOneTimeTasks);
 router.post("/:taskId/complete", completedTasks);
 router.post("/delete", deleteTasks);
 

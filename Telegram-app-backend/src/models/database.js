@@ -7,7 +7,7 @@ dotenv.config();
 // Define User Schema
 const userSchema = new mongoose.Schema(
   {
-    chat_id:{ type: String },
+    chat_id: { type: String, required: true, unique: true },
     telegram_id: { type: String, required: true, unique: true },
     username: { type: String },
     additional_details: { type: Object },
@@ -24,7 +24,6 @@ const userSchema = new mongoose.Schema(
     isPremium: { type: Number },
     ogLevel: { type: Number },
     socials: { type: String, default: false },
-
     shares: { type: Number, default: 100000 },
     claimedShares: {
       // Object to track share claims by type
@@ -46,7 +45,19 @@ const userSchema = new mongoose.Schema(
       of: String,
       default: {},
     },
-
+    taskShares: { type: Number, default: 0 },
+    unlockPoints: { type: Number, default: 0 },
+    currentCard: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Cards",
+    },
+    unlockedCards: [
+      {
+        _id: { type: mongoose.Schema.Types.ObjectId, ref: "Cards" },
+        title: String,
+        image: String,
+      },
+    ],
     //referral schemas
     referred_by: { type: String, default: null },
     referrals: { type: [String], default: [] },

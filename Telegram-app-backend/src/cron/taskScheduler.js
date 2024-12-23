@@ -1,27 +1,18 @@
 const cron = require("node-cron");
 const Tasks = require("../models/tasks");
 
-let isProcessing = false;
+cron.schedule("*/1 * * * *", async () => {
+  const now = Date.now();
+  const tasks = await Tasks.find();
 
-cron.schedule("* * * * *", async () => {
-  if (isProcessing) return;
+  for (const task of tasks) {
+    const taskCreatedTime = new Date(task.createdAt).getTime();
+    const remainingTime =
+      task.countdown - Math.floor((now - taskCreatedTime) / 1000);
 
-  isProcessing = true;
-
-  try {
-    const now = Date.now();
-    const tasksToExpire = await Tasks.updateMany(
-      {
-        isExpired: false,
-        createdAt: { $lte: new Date(now - 1000 * 60 * 60 * 24) }, // Example: 24-hour countdown
-      },
-      { $set: { isExpired: true } }
-    );
-
-    console.log(`${tasksToExpire.modifiedCount} tasks marked as expired.`);
-  } catch (error) {
-    console.error("Error checking expired tasks:", error.message);
-  } finally {
-    isProcessing = false;
+    if (task.taskType === "one-time" && remainingTime <= 0) {
+      await Tasks.findByIdAndDelete(task._id);
+      console.log(`Deleted expired one-time task: ${task.title}`);
+    }
   }
 });

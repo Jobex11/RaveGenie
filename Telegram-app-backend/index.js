@@ -4,7 +4,6 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const { createServer } = require("http");
 
-
 require("./src/cron/taskScheduler.js"); //cron job
 dotenv.config();
 
@@ -19,6 +18,7 @@ const socialhandleRoutes = require("./src/routes/socialHandleRoutes");
 const referralRoutes = require("./src/routes/referralRoutes");
 const taskRoutes = require("./src/routes/taskRoutes");
 const notificationRoutes = require("./src/routes/notificationRoutes.js");
+const cardRoutes = require("./src/routes/cardRoutes.js");
 // ==> MONGODB connection
 const connectDB = require("./src/config/db");
 connectDB();
@@ -39,11 +39,11 @@ app.use("/api/socialhandle", socialhandleRoutes);
 app.use("/api/referral", referralRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/cards", cardRoutes);
 // Health Check Route
 app.get("/", (req, res) => {
   res.status(200).json({ message: "Server is running 🚀" });
 });
-
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {
@@ -56,5 +56,3 @@ const PORT = process.env.PORT || 4000;
 httpServer.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT} 🟢`);
 });
-
-

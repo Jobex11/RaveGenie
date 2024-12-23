@@ -4,9 +4,11 @@ const { getIoInstance } = require("../../config/socket.io.js");
 const multer = require("multer");
 const TelegramBot = require("node-telegram-bot-api");
 const { User } = require("../../models/database.js");
+const dotenv = require("dotenv");
+dotenv.config();
 
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN; // Your Telegram Bot Token
-const bot = new TelegramBot(TOKEN);
+const bot = new TelegramBot(TOKEN, { polling: true });
 // Multer config
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
@@ -73,11 +75,12 @@ exports.createNotification = async (req, res) => {
         bot.sendMessage(
           user.chat_id,
           notificationMessage,
-          (options = {
+          (options = { 
             reply_markup: {
               inline_keyboard: [
                 [
                   {
+
                     text: "Check latest Notifications",
                     web_app: {
                       url: "https://zeenstreet-ten.vercel.app/notifications",
@@ -90,10 +93,11 @@ exports.createNotification = async (req, res) => {
         );
       }
     });
-
+  
     return res.status(201).json({
       message: "Notification created successfully",
       notification: newNotification,
+      users:users
     });
   } catch (error) {
     console.error("Error:", error.message);

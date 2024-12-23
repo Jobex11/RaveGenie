@@ -1,5 +1,6 @@
 const crypto = require("crypto");
 const { User } = require("../models/database");
+const Cards = require("../models/cards");
 
 exports.authenticateUser = async (req, res) => {
   const {
@@ -36,6 +37,13 @@ exports.authenticateUser = async (req, res) => {
       });
 
       await user.save();
+
+      // Set initial card if none exists. This assumes there is a default card in the database.
+      const initialCard = await Cards.findOne();
+      if (!user.currentCard) {
+        user.currentCard = initialCard ? initialCard._id : null;
+        await user.save();
+      }
 
       const referralLink = `https://t.me/RaveGenieBot?start=${user.referralCode}`;
       return res.status(201).json({
@@ -80,14 +88,12 @@ exports.getAllUsers = async (req, res) => {
       .sort({ createdAt: -1 });
     const totalUsers = await User.countDocuments();
 
-    res
-      .status(200)
-      .json({
-        users: users,
-        totalUsers: totalUsers,
-        totalPages: Math.ceil(totalUsers / limit),
-        currentPage: page,
-      });
+    res.status(200).json({
+      users: users,
+      totalUsers: totalUsers,
+      totalPages: Math.ceil(totalUsers / limit),
+      currentPage: page,
+    });
   } catch (err) {
     console.error("Error fetching users:", err);
     res.status(500).json({ error: "Internal server error." });
@@ -102,6 +108,13 @@ exports.getUsersById = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({ message: "User not found." });
+    }
+
+    // Set initial card if none exists. This assumes there is a default card in the database.
+    const initialCard = await Cards.findOne();
+    if (!user.currentCard) {
+      user.currentCard = initialCard ? initialCard._id : null;
+      await user.save();
     }
 
     res.status(200).json({ user });

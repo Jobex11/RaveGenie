@@ -11,8 +11,7 @@ const taskSchema = new mongoose.Schema(
     image: { type: String, required: true },
     taskType: {
       type: String,
-      enum: ["one-time", "recurring"], // Type of task
-      required: true,
+     default:"one-time"
     },
     category: {
       type: String,
@@ -22,7 +21,17 @@ const taskSchema = new mongoose.Schema(
     diminishingRewards: {
       type: String,
       enum: ["No", "Yes"],
-      required: true,
+      required: false,
+    },
+    diminishingPoints: {
+      type: [Number], // Array of time points in seconds
+      default: [],
+    },
+    diminishingPercentage: {
+      type: Number, // Percentage of reward to diminish
+      default: 0,
+      min: 0,
+      max: 100,
     },
     countdown: {
       type: Number, // Countdown in seconds
@@ -35,7 +44,7 @@ const taskSchema = new mongoose.Schema(
     createdAt: { type: Date, default: Date.now },
     isExpired: {
       type: Boolean,
-      default: false, // Task expires after countdown
+      default: false, 
     },
   },
   {
