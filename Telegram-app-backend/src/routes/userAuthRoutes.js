@@ -3,6 +3,7 @@ const {
   authenticateUser,
   getAllUsers,
   getUsersById,
+  deleteUserByChatId,
 } = require("../controllers/authController");
 
 const router = express.Router();
@@ -13,5 +14,6 @@ router.post("/", authenticateUser);
 // ====> Route to fetch all users
 router.get("/all-users", getAllUsers);
 router.get("/:telegram_id/user", getUsersById);
+router.delete("/:chat_id", deleteUserByChatId);
 
 module.exports = router;
