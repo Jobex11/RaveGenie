@@ -46,7 +46,7 @@ exports.authenticateUser = async (req, res) => {
         await user.save();
       }
 
-      const referralLink = `https://t.me/RaveGenieBot?start=${user.referralCode}`;
+      const referralLink = `https://t.me/RaveGenie_Bot/game?start=${user.referralCode}`;
       return res.status(201).json({
         message: "New user created successfully 🎉",
         user: {
@@ -63,7 +63,7 @@ exports.authenticateUser = async (req, res) => {
       await user.save();
     }
 
-    const referralLink = `https://t.me/RaveGenieBot?start=${user.referralCode}`;
+    const referralLink = `https://t.me/RaveGenie_Bot/game?start=${user.referralCode}`;
 
     res.status(200).json({
       message: "We are glad to have you back 😊",
@@ -113,6 +113,9 @@ exports.getUsersById = async (req, res) => {
       return res.status(404).json({ message: "User not found." });
     }
 
+    const currentReferralCount = user.referrals ? user.referrals.length : 0;
+    const claimedReferralCount = user.referralCount || 0;
+    const hasNewReferrals = currentReferralCount > claimedReferralCount;
     // Set initial card if none exists. This assumes there is a default card in the database.
     const initialCard = await Cards.findOne();
     if (!user.currentCard) {
@@ -120,7 +123,7 @@ exports.getUsersById = async (req, res) => {
       await user.save();
     }
 
-    res.status(200).json({ user });
+    res.status(200).json({ user, hasNewReferrals: hasNewReferrals });
   } catch (err) {
     console.error("Error fetching user:", err);
     res.status(500).json({ error: "Internal server error." });

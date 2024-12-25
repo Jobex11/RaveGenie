@@ -4,9 +4,12 @@ const multer = require("multer");
 const TelegramBot = require("node-telegram-bot-api");
 const Tasks = require("../../models/tasks.js");
 const Cards = require("../../models/cards");
+const dotenv = require("dotenv");
+dotenv.config();
+const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
-const TOKEN = process.env.TELEGRAM_BOT_TOKEN; // Your Telegram Bot Token
-const bot = new TelegramBot(TOKEN);
+// Initialize Telegram bot
+const bot = new TelegramBot(TOKEN, { polling: true });
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
@@ -103,6 +106,32 @@ exports.createOneTimeTasks = async (req, res) => {
     });
 
     await newTask.save();
+    const users = await User.find({}); 
+    const taskMessage = ` Hey ${users.username || "there"} a New 📝 Task is available ${title}\n\nComplete this task to earn your rewards! 🎉`;
+    const options = {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: "Perform The Tasks  🚀",
+              web_app: {
+                url: "https://zeenstreet-ten.vercel.app/tasks",
+              },
+            },
+          ],
+        ],
+      },
+    };
+    users.forEach((user) => {
+      if (user.chat_id) {
+        bot.sendMessage(user.chat_id, taskMessage, options).catch((err) => {
+          console.error(
+            `Failed to send message to chat ID ${user.chat_id}:`,
+            err.message
+          );
+        });
+      }
+    });
     return res.status(201).json({
       message: "Task created successfully, and users have been notified.",
       task: newTask,
@@ -175,14 +204,20 @@ exports.completedTasks = async (req, res) => {
     // Fetch the task
     const task = await Tasks.findById(taskId);
     if (!task || task.isExpired) {
-      return res.status(400).json({ message: "Task has expired or doesn't exist." });
+      return res
+        .status(400)
+        .json({ message: "Task has expired or doesn't exist." });
     }
 
     // Calculate task reward
     const now = Date.now();
-    const elapsedTime = Math.floor((now - new Date(task.createdAt).getTime()) / 1000);
+    const elapsedTime = Math.floor(
+      (now - new Date(task.createdAt).getTime()) / 1000
+    );
     const remainingTime = task.countdown - elapsedTime;
-    const reward = Math.floor((task.baseReward * remainingTime) / task.countdown);
+    const reward = Math.floor(
+      (task.baseReward * remainingTime) / task.countdown
+    );
 
     // Fetch the user
     const user = await User.findOne({ telegram_id });
@@ -217,7 +252,8 @@ exports.completedTasks = async (req, res) => {
 
     if (currentCard) {
       // Dynamically calculate taskPoints using the formula
-      const taskPoints = (reward / currentCard.basePoint) * currentCard.taskPoint;
+      const taskPoints =
+        (reward / currentCard.basePoint) * currentCard.taskPoint;
 
       // Add points to the user's unlockPoints
       user.unlockPoints += taskPoints;
@@ -243,7 +279,9 @@ exports.completedTasks = async (req, res) => {
         user.taskShares = 0;
 
         // Find the next available card
-        const nextCard = await Cards.findOne({ _id: { $nin: user.unlockedCards.map(c => c._id) } });
+        const nextCard = await Cards.findOne({
+          _id: { $nin: user.unlockedCards.map((c) => c._id) },
+        });
 
         // Set the new currentCard
         user.currentCard = nextCard ? nextCard._id : null;
@@ -252,7 +290,8 @@ exports.completedTasks = async (req, res) => {
         await user.save();
 
         return res.status(200).json({
-          message: "Task completed, card collected successfully! Next card unlocked.",
+          message:
+            "Task completed, card collected successfully! Next card unlocked.",
           reward,
           taskShares: user.taskShares,
           userShares: user.shares,
@@ -270,13 +309,18 @@ exports.completedTasks = async (req, res) => {
         userShares: user.shares,
         remainingPoints: currentCard.totalUnlockPoints - user.unlockPoints,
         unlockedPoints: user.unlockPoints,
-        progressInPercentage: Math.min(Math.floor((user.unlockPoints / currentCard.totalUnlockPoints) * 100), 100),
+        progressInPercentage: Math.min(
+          Math.floor((user.unlockPoints / currentCard.totalUnlockPoints) * 100),
+          100
+        ),
         progressDisplay: `${user.unlockPoints}/${currentCard.totalUnlockPoints}`,
       });
     }
 
     // If no currentCard, set the first available card as currentCard
-    const firstCard = await Cards.findOne({ _id: { $nin: user.unlockedCards.map(c => c._id) } });
+    const firstCard = await Cards.findOne({
+      _id: { $nin: user.unlockedCards.map((c) => c._id) },
+    });
     if (firstCard) {
       user.currentCard = firstCard._id;
       await user.save();
@@ -300,7 +344,6 @@ exports.completedTasks = async (req, res) => {
   }
 };
 
-
 exports.deleteTasks = async (req, res) => {
   try {
     // Specify the user and the number of points to add
@@ -314,19 +357,22 @@ exports.deleteTasks = async (req, res) => {
     );
 
     if (updatedUser.nModified === 0) {
-      return res.status(400).json({ message: "No user found or unlockPoints were not updated." });
+      return res
+        .status(400)
+        .json({ message: "No user found or unlockPoints were not updated." });
     }
 
     // Delete all tasks (if that's still required)
     await Tasks.deleteMany({});
 
-    res.status(200).json({ message: "All tasks deleted successfully and unlockPoints updated." });
+    res.status(200).json({
+      message: "All tasks deleted successfully and unlockPoints updated.",
+    });
   } catch (error) {
     console.error("Error deleting tasks:", error);
     res.status(500).json({ message: "An error occurred while deleting tasks" });
   }
 };
-
 
 // Send Telegram notification
 // const users = await User.find({});

@@ -71,7 +71,7 @@ exports.createNotification = async (req, res) => {
       if (user.chat_id) {
         const notificationMessage = `Hey ${
           user.username || "there"
-        }, a new Notification is available! 🎉 Go check it out 🚀`;
+        }, a new Notification 🔔 is available!  Go check it out 🚀`;
         bot.sendMessage(
           user.chat_id,
           notificationMessage,
@@ -81,7 +81,7 @@ exports.createNotification = async (req, res) => {
                 [
                   {
 
-                    text: "Check latest Notifications",
+                    text: "Check latest Notifications 🔔",
                     web_app: {
                       url: "https://zeenstreet-ten.vercel.app/notifications",
                     },
