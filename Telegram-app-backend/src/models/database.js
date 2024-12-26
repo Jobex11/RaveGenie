@@ -57,8 +57,10 @@ const userSchema = new mongoose.Schema(
         _id: { type: mongoose.Schema.Types.ObjectId, ref: "Cards" },
         title: String,
         image: String,
+        wealthClass: String,
       },
     ],
+    unlockedCardsCount: { type: Number, default: 0 },
     //referral schemas
     referred_by: { type: String, default: null },
     referrals: { type: [String], default: [] },

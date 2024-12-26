@@ -106,8 +106,10 @@ exports.createOneTimeTasks = async (req, res) => {
     });
 
     await newTask.save();
-    const users = await User.find({}); 
-    const taskMessage = ` Hey ${users.username || "there"} a New 📝 Task is available ${title}\n\nComplete this task to earn your rewards! 🎉`;
+    const users = await User.find({});
+    const taskMessage = ` Hey ${
+      users.username || "there"
+    } a New 📝 Task is available ${title}\n\nComplete this task to earn your rewards! 🎉`;
     const options = {
       reply_markup: {
         inline_keyboard: [
@@ -122,16 +124,16 @@ exports.createOneTimeTasks = async (req, res) => {
         ],
       },
     };
-    users.forEach((user) => {
-      if (user.chat_id) {
-        bot.sendMessage(user.chat_id, taskMessage, options).catch((err) => {
-          console.error(
-            `Failed to send message to chat ID ${user.chat_id}:`,
-            err.message
-          );
-        });
-      }
-    });
+    // users.forEach((user) => {
+    //   if (user.chat_id) {
+    //     bot.sendMessage(user.chat_id, taskMessage, options).catch((err) => {
+    //       console.error(
+    //         `Failed to send message to chat ID ${user.chat_id}:`,
+    //         err.message
+    //       );
+    //     });
+    //   }
+    // });
     return res.status(201).json({
       message: "Task created successfully, and users have been notified.",
       task: newTask,
@@ -269,6 +271,7 @@ exports.completedTasks = async (req, res) => {
           _id: currentCard._id,
           title: currentCard.title,
           image: currentCard.image,
+          wealthClass: currentCard.associatedWealthClass,
         });
 
         // Add the points to the user's main shares
@@ -347,7 +350,7 @@ exports.completedTasks = async (req, res) => {
 exports.deleteTasks = async (req, res) => {
   try {
     // Specify the user and the number of points to add
-    const userId = "6765c1e8fd9954465418d8e2"; // Replace with the appropriate user ID
+    const userId = "67696efe4a2133702e491d3d"; // Replace with the appropriate user ID
     const taskPoints = 500; // Example points to add, use actual calculated value if needed
 
     // Update the user with the new unlockPoints

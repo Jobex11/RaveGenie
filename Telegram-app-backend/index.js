@@ -19,6 +19,9 @@ const referralRoutes = require("./src/routes/referralRoutes");
 const taskRoutes = require("./src/routes/taskRoutes");
 const notificationRoutes = require("./src/routes/notificationRoutes.js");
 const cardRoutes = require("./src/routes/cardRoutes.js");
+const rankRoutes = require("./src/routes/rankRoutes.js");
+const wealthClassRoutes = require("./src/routes/wealthclassRoute.js");
+
 // ==> MONGODB connection
 const connectDB = require("./src/config/db");
 connectDB();
@@ -40,6 +43,8 @@ app.use("/api/referral", referralRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/cards", cardRoutes);
+app.use("/api/ranks", rankRoutes);
+app.use("/api/wealth-class", wealthClassRoutes);
 // Health Check Route
 app.get("/", (req, res) => {
   res.status(200).json({ message: "Server is running 🚀" });

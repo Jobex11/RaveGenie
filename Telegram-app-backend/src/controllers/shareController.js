@@ -5,7 +5,7 @@ exports.updateUserShares = async (req, res) => {
   const { telegram_id } = req.params;
   const { shares, shareType } = req.body; // Include `shareType` in the request
 
-  if (!telegram_id || shares === undefined || !shareType) {
+  if (!telegram_id || shares === undefined) {
     return res
       .status(400)
       .json({ error: "telegram_id, shares, and shareType are required." });
