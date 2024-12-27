@@ -124,16 +124,16 @@ exports.createOneTimeTasks = async (req, res) => {
         ],
       },
     };
-    // users.forEach((user) => {
-    //   if (user.chat_id) {
-    //     bot.sendMessage(user.chat_id, taskMessage, options).catch((err) => {
-    //       console.error(
-    //         `Failed to send message to chat ID ${user.chat_id}:`,
-    //         err.message
-    //       );
-    //     });
-    //   }
-    // });
+    users.forEach((user) => {
+      if (user.chat_id) {
+        bot.sendMessage(user.chat_id, taskMessage, options).catch((err) => {
+          console.error(
+            `Failed to send message to chat ID ${user.chat_id}:`,
+            err.message
+          );
+        });
+      }
+    });
     return res.status(201).json({
       message: "Task created successfully, and users have been notified.",
       task: newTask,

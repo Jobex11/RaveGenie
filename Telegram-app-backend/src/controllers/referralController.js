@@ -206,7 +206,7 @@ exports.getReferralLink = async (req, res) => {
     if (!user) return res.status(404).send("User not found.");
 
     // Generate the referral link
-    const referralLink = `https://t.me/RaveGenie_Bot/game?start=${user.referralCode}`;
+    const referralLink = `https://t.me/RaveGenie_Bot?start=${user.referralCode}`;
 
     // Save the referral link to the database if not already saved
     if (user.referralLink !== referralLink) {

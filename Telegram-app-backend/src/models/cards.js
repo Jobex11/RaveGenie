@@ -32,7 +32,7 @@ const cardSchema = new mongoose.Schema(
       type: String,
       enum: [
         "Bottom Feeders",
-        "The Aspired",
+        "The Aspirers",
         "Stable Money",
         "High Achievers",
         "Elite Circle",

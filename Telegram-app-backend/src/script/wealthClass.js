@@ -84,13 +84,14 @@ const seedWealthClasses = async () => {
       await mongoose.connect(process.env.MONGO_URI);
   
       console.log("Connected to MongoDB");
-      await WealthClass.deleteMany(); // Clear existing data
+      await User.deleteMany(); 
       console.log("Existing rank data cleared.");
   
-      // Update the unlockedCards with the wealthClass field
-      await WealthClass.insertMany(wealthClasses); 
+      // // Update the unlockedCards with the wealthClass field
+      // await WealthClass.insertMany(wealthClasses); cls
+      
   
-      console.log("Wealth classes updated successfully");
+      // console.log("Wealth classes updated successfully");
   
       // Close connection
       await mongoose.connection.close();

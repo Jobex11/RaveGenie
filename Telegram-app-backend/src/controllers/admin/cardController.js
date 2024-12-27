@@ -90,7 +90,7 @@ exports.getUserCards = async (req, res) => {
     }
 
     // Fetch all cards from the database
-    const allCards = await Cards.find().sort({ createdAt: 1 }); // Sorted by creation date
+    const allCards = await Cards.find().sort({ createdAt: 1 });
     if (!allCards || allCards.length === 0) {
       return res.status(404).json({ message: "No cards available." });
     }

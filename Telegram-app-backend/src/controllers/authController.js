@@ -46,7 +46,7 @@ exports.authenticateUser = async (req, res) => {
         await user.save();
       }
 
-      const referralLink = `https://t.me/RaveGenie_Bot/game?start=${user.referralCode}`;
+      const referralLink = `https://t.me/RaveGenie_Bot?start=${user.referralCode}`;
       return res.status(201).json({
         message: "New user created successfully 🎉",
         user: {
@@ -63,7 +63,7 @@ exports.authenticateUser = async (req, res) => {
       await user.save();
     }
 
-    const referralLink = `https://t.me/RaveGenie_Bot/game?start=${user.referralCode}`;
+    const referralLink = `https://t.me/RaveGenie_Bot?start=${user.referralCode}`;
 
     res.status(200).json({
       message: "We are glad to have you back 😊",
