@@ -17,7 +17,7 @@ exports.registerWithReferral = async (req, res) => {
       telegram_id,
       accountName,
       referred_by: referringUser.telegram_id,
-      referralCode: crypto.randomBytes(4).toString("hex") + telegram_id,
+      referralCode: `ref_${telegram_id}`,
     });
 
     await newUser.save();
@@ -233,51 +233,38 @@ exports.claimReferralShares = async (req, res) => {
   try {
     // Find the user by telegram_id
     const user = await User.findOne({ telegram_id });
-    if (!user) return res.status(404).send("User not found.");
-
-    // Calculate the number of new referrals
-    const currentReferralCount = user.referrals ? user.referrals.length : 0;
-    const claimedReferralCount = user.referralCount || 0; // Previously claimed referrals
-    const newReferrals = currentReferralCount - claimedReferralCount;
-
-    // Update claimable shares based on new referrals
-    if (newReferrals > 0) {
-      const newClaimableShares = newReferrals * 1000;
-      user.claimReferrals_shares =
-        (user.claimReferrals_shares || 0) + newClaimableShares;
-
-      // Update the stored referral count
-      user.referralCount = currentReferralCount;
-
-      // Save the updated user document
-      await user.save();
+    if (!user) {
+      return res.status(404).send("User not found.");
     }
 
-    // Check if the user has claimable shares
+    // Check if the user has claimable referral shares
     const claimableShares = user.claimReferrals_shares || 0;
-    if (claimableShares > 0) {
-      // Add claimable shares to the total shares
-      user.shares += claimableShares;
 
-      // Reset claimable shares after claiming
+    if (claimableShares > 0) {
+      // Add claimable shares to the user's total shares
+      user.shares = (user.shares || 0) + claimableShares;
+
+      // Reset claimable referral shares
       user.claimReferrals_shares = 0;
 
       // Save the updated user document
       await user.save();
 
-      res.status(200).json({
+      return res.status(200).json({
         message: "Referral shares claimed successfully.",
         telegram_id,
         addedShares: claimableShares,
         totalShares: user.shares,
-        currentReferralCount,
-        hasNewReferrals: currentReferralCount > user.referralCount,
       });
     } else {
-      res.status(400).send("No claimable referral shares at the moment.");
+      return res
+        .status(400)
+        .send("No claimable referral shares at the moment.");
     }
   } catch (error) {
-    console.error(error);
-    res.status(500).send("An error occurred while claiming referral shares.");
+    console.error("Error claiming referral shares:", error);
+    return res
+      .status(500)
+      .send("An error occurred while claiming referral shares.");
   }
 };

@@ -1,4 +1,3 @@
-const crypto = require("crypto");
 const { User } = require("../models/database");
 const Cards = require("../models/cards");
 
@@ -24,7 +23,7 @@ exports.authenticateUser = async (req, res) => {
     let user = await User.findOne({ telegram_id });
 
     if (!user) {
-      const referralCode = crypto.randomBytes(4).toString("hex") + telegram_id; // Generate referral code
+      const referralCode = `ref_${telegram_id}`; // Generate referral code
       user = new User({
         telegram_id,
         username,
@@ -58,7 +57,7 @@ exports.authenticateUser = async (req, res) => {
 
     if (!user.referralCode) {
       //user.referralCode = crypto.randomBytes(4).toString("hex") + telegram_id;
-      user.referralCode = `ref_${telegram_id}_${Date.now()}`;
+      user.referralCode = `ref_${telegram_id}`;
 
       await user.save();
     }
@@ -106,16 +105,35 @@ exports.getAllUsers = async (req, res) => {
 exports.getUsersById = async (req, res) => {
   const { telegram_id } = req.params; // Ensure `telegram_id` is extracted from the request body
   try {
-    // Use `findOne` to fetch a single user by `telegram_id`
+    // Fetch the user by their Telegram ID
     const user = await User.findOne({ telegram_id });
 
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
 
-    const currentReferralCount = user.referrals ? user.referrals.length : 0;
-    const claimedReferralCount = user.referralCount || 0;
-    const hasNewReferrals = currentReferralCount > claimedReferralCount;
+    // Calculate the referral count
+    user.referralCount = user.referrals ? user.referrals.length : 0;
+    const tier1Referrals = await User.find({
+      telegram_id: { $in: user.referrals },
+    });
+
+    // Fetch Tier 2 referrals (referrals made by Tier 1 users)
+    const tier2Referrals = await User.find({
+      telegram_id: { $in: tier1Referrals.flatMap((ref) => ref.referrals) },
+    });
+    // Calculate referral shares
+    const tier1Shares = tier1Referrals.length * 100; // 100 shares per Tier 1 referral
+    const tier2Shares = tier2Referrals.length * 50; // 50 shares per Tier 2 referral
+    const claimReferralShares = tier1Shares + tier2Shares;
+    user.claimReferrals_shares = claimReferralShares;
+    user.tier1Count = tier1Referrals.length;
+    user.tier2Count = tier2Referrals.length;
+    // Save the updated user
+    await user.save();
+
+    // Fetch Tier 1 referrals (direct referrals)
+
     // Set initial card if none exists. This assumes there is a default card in the database.
     const initialCard = await Cards.findOne();
     if (!user.currentCard) {
@@ -123,7 +141,10 @@ exports.getUsersById = async (req, res) => {
       await user.save();
     }
 
-    res.status(200).json({ user, hasNewReferrals: hasNewReferrals });
+    // Respond with user data and calculated shares
+    res.status(200).json({
+      user,
+    });
   } catch (err) {
     console.error("Error fetching user:", err);
     res.status(500).json({ error: "Internal server error." });

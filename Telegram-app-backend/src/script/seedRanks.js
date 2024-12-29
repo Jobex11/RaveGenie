@@ -20,8 +20,8 @@ mongoose
 
 // Complete rank data
 const rankData = [
-  { rank: "Nobody", rankRange: { min: 0, max: 9999 } },
-  { rank: "Maze Rat", rankRange: { min: 10000, max: 19999 } },
+  { rank: "Nobody", rankRange: { min: 0, max: 14999 } },
+  { rank: "Maze Rat", rankRange: { min: 15000, max: 19999 } },
   { rank: "Street Runner", rankRange: { min: 20000, max: 29999 } },
   { rank: "Intern", rankRange: { min: 30000, max: 39999 } },
   { rank: "Analyst", rankRange: { min: 40000, max: 49999 } },
@@ -55,6 +55,7 @@ const rankData = [
   { rank: "Sovereign Lord", rankRange: { min: 320000, max: 329999 } },
   { rank: "Omniarch", rankRange: { min: 330000, max: 339999 } },
 ];
+
 
 // Seed function
 const seedRanks = async () => {

@@ -69,7 +69,9 @@ const userSchema = new mongoose.Schema(
     referralLink: {
       type: String,
     },
-    claimReferrals_shares: { type: Number, default: 0 }, // Claimable referral shares
+    claimReferrals_shares: { type: Number, default: 0 },
+    tier1Count: { type: Number, default: 0 },
+    tier2Count: { type: Number, default: 0 },
     tier1: { type: [String], default: [] },
     tier2: { type: [String], default: [] },
 
