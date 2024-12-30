@@ -77,6 +77,43 @@ bot.onText(/\/start(?: (.+))?/, async (msg, match) => {
   bot.sendMessage(chatId, message, options);
 });
 
+bot.on("callback_query", async (callbackQuery) => {
+  const chatId = callbackQuery.message.chat.id;
+
+  // Check if the user is already created
+  const user = await axios.get(
+    `https://ravegenie-vgm7.onrender.com/api/auth/${callbackQuery.from.id}/user`
+  );
+
+  if (!user.data) {
+    const referredBy = callbackQuery.data; // This will be the referral code from the start= parameter
+
+    // Send user data to your API for user creation and referral handling
+    const userData = {
+      telegram_id: callbackQuery.from.id,
+      username: callbackQuery.from.username,
+      first_name: callbackQuery.from.first_name,
+      last_name: callbackQuery.from.last_name,
+      is_bot: callbackQuery.from.is_bot,
+      language_code: callbackQuery.from.language_code,
+      chat_id: chatId,
+      referred_by: referredBy, // Capture the referral code
+    };
+
+    try {
+      // Send to your API for user creation and referral processing
+      await axios.post("https://ravegenie-vgm7.onrender.com/api/auth", userData);
+      bot.sendMessage(chatId, "Welcome! You have been successfully registered and your referral has been recorded.");
+    } catch (error) {
+      console.error("Error processing referral:", error.message);
+      bot.sendMessage(chatId, "There was an error processing your referral.");
+    }
+  }   
+  // else {
+  //   bot.sendMessage(chatId, "You have already started the bot!");
+  // }
+});
+
 bot.on("message", async (msg) => {
   if (msg?.service_message?.type === "delete_chat_history") {
     const chatId = msg.chat.id;

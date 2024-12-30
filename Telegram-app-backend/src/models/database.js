@@ -8,7 +8,6 @@ dotenv.config();
 const userSchema = new mongoose.Schema(
   {
     chat_id: { type: String, required: true, unique: true },
-    chat_id: { type: String },
     telegram_id: { type: String, required: true, unique: true },
     username: { type: String },
     additional_details: { type: Object },
@@ -27,7 +26,6 @@ const userSchema = new mongoose.Schema(
     socials: { type: String, default: false },
     shares: { type: Number, default: 0 },
     claimedShares: {
-      // Object to track share claims by type
       type: Map,
       of: Boolean,
       default: {},
@@ -60,6 +58,12 @@ const userSchema = new mongoose.Schema(
         wealthClass: String,
       },
     ],
+    story: {
+      text: { type: String, default: "This is your default story text."},
+      image: { type: String, default: "default-image-url.jpg" },
+      hasShared: { type: Boolean, default: false },
+      storyLink: { type: String, default: "http://default-story-link.com"},
+    },
     unlockedCardsCount: { type: Number, default: 0 },
     //referral schemas
     referred_by: { type: String, default: null },
@@ -74,11 +78,6 @@ const userSchema = new mongoose.Schema(
     tier2Count: { type: Number, default: 0 },
     tier1: { type: [String], default: [] },
     tier2: { type: [String], default: [] },
-
-    //social schemas
-    has_joined_telegram: { type: Boolean, default: false },
-    has_followed_youtube: { type: Boolean, default: false },
-    has_followed_x: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
