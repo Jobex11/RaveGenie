@@ -7,30 +7,52 @@ exports.registerWithReferral = async (req, res) => {
   const { telegram_id, accountName, referralCode } = req.body;
 
   try {
+    // Find the referring user by referral code
     const referringUser = await User.findOne({ referralCode });
     if (!referringUser) return res.status(400).send("Invalid referral code.");
 
+    // Check if the user already exists
     const existingUser = await User.findOne({ telegram_id });
     if (existingUser) return res.status(400).send("User already exists.");
 
+    // Create the new user
     const newUser = new User({
       telegram_id,
       accountName,
       referred_by: referringUser.telegram_id,
-      referralCode: `ref_${telegram_id}`,
+      referralCode: telegram_id,
     });
 
     await newUser.save();
 
+    // Update the referrals array for the referring user
     referringUser.referrals.push(telegram_id);
+
+    // Allocate shares for Tier1 referrals
+    referringUser.claimReferrals_shares =
+      (referringUser.claimReferrals_shares || 0) + 100;
+
+    // Save the referring user
     await referringUser.save();
+
+    // Handle Tier2 referrals
+    if (referringUser.referred_by) {
+      const tier2Referrer = await User.findOne({
+        telegram_id: referringUser.referred_by,
+      });
+      if (tier2Referrer) {
+        tier2Referrer.claimReferrals_shares =
+          (tier2Referrer.claimReferrals_shares || 0) + 50;
+        await tier2Referrer.save();
+      }
+    }
 
     res.status(201).json({
       message: "User registered successfully with referral.",
       referralCode: newUser.referralCode,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error during registration:", error);
     res.status(500).send("An error occurred during registration.");
   }
 };
@@ -43,7 +65,9 @@ exports.tier1 = async (req, res) => {
     const user = await User.findOne({ telegram_id });
     if (!user) return res.status(404).send("User not found.");
 
-    const tier1 = await User.find({ referred_by: user.referralCode });
+    const tier1 = await User.find({ referred_by: user.referralCode }).sort({
+      createdAt: -1,
+    });
 
     const referralDetails = tier1.map((referral) => ({
       telegram_id: referral.telegram_id, //==> to get avatar_url of referrals
@@ -78,7 +102,9 @@ exports.tier2 = async (req, res) => {
     const user = await User.findOne({ telegram_id });
     if (!user) return res.status(404).send("User not found.");
 
-    const tier1 = await User.find({ referred_by: user.referralCode });
+    const tier1 = await User.find({ referred_by: user.referralCode }).sort({
+      createdAt: -1,
+    });
     if (tier1.length === 0) {
       return res.status(200).json({
         message:
@@ -89,7 +115,9 @@ exports.tier2 = async (req, res) => {
 
     const tier2 = await User.find({
       referred_by: { $in: tier1.map((referral) => referral.referralCode) },
-    });
+    }).sort({
+      createdAt: -1,
+    });;
 
     const tier2Details = tier2.map((referral) => ({
       telegram_id: referral.telegram_id, // Get avatar_url or Telegram ID

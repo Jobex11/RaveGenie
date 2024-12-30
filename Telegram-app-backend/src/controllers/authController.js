@@ -23,7 +23,7 @@ exports.authenticateUser = async (req, res) => {
     let user = await User.findOne({ telegram_id });
 
     if (!user) {
-      const referralCode = `ref_${telegram_id}`; // Generate referral code
+      const referralCode = telegram_id; // Generate referral code
       user = new User({
         telegram_id,
         username,
@@ -56,8 +56,7 @@ exports.authenticateUser = async (req, res) => {
     }
 
     if (!user.referralCode) {
-      //user.referralCode = crypto.randomBytes(4).toString("hex") + telegram_id;
-      user.referralCode = `ref_${telegram_id}`;
+      user.referralCode = telegram_id;
 
       await user.save();
     }
@@ -87,11 +86,35 @@ exports.getAllUsers = async (req, res) => {
       .skip((page - 1) * limit)
       .limit(limit)
       .sort({ createdAt: -1 });
+
     const totalUsers = await User.countDocuments();
 
+    // Map users to include additional fields dynamically
+    const usersWithDetails = users.map((user) => {
+      const unlockedCardsCount = user.unlockedCards
+        ? user.unlockedCards.length
+        : 0;
+
+      // Calculate referrals and related fields dynamically
+      const referralCount = user.referrals ? user.referrals.length : 0;
+      const claimReferrals_shares = user.claimReferrals_shares || 0;
+      const tier1 = user.tier1 || 0;
+      const tier2 = user.tier2 || 0;
+
+      return {
+        ...user._doc, // Spread the user document fields
+        unlockedCardsCount,
+        referrals: user.referrals || [], // Default to an empty array if not present
+        claimReferrals_shares,
+        tier1,
+        tier2,
+        referralCount,
+      };
+    });
+
     res.status(200).json({
-      users: users,
-      totalUsers: totalUsers,
+      users: usersWithDetails,
+      totalUsers,
       totalPages: Math.ceil(totalUsers / limit),
       currentPage: page,
     });
@@ -103,45 +126,54 @@ exports.getAllUsers = async (req, res) => {
 
 //==> GETSERBYID
 exports.getUsersById = async (req, res) => {
-  const { telegram_id } = req.params; // Ensure `telegram_id` is extracted from the request body
+  const { telegram_id } = req.params;
   try {
-    // Fetch the user by their Telegram ID
     const user = await User.findOne({ telegram_id });
 
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
 
-    // Calculate the referral count
-    user.referralCount = user.referrals ? user.referrals.length : 0;
-    const tier1Referrals = await User.find({
-      telegram_id: { $in: user.referrals },
-    });
-
-    // Fetch Tier 2 referrals (referrals made by Tier 1 users)
-    const tier2Referrals = await User.find({
-      telegram_id: { $in: tier1Referrals.flatMap((ref) => ref.referrals) },
-    });
-    // Calculate referral shares
-    const tier1Shares = tier1Referrals.length * 100; // 100 shares per Tier 1 referral
-    const tier2Shares = tier2Referrals.length * 50; // 50 shares per Tier 2 referral
-    const claimReferralShares = tier1Shares + tier2Shares;
-    user.claimReferrals_shares = claimReferralShares;
-    user.tier1Count = tier1Referrals.length;
-    user.tier2Count = tier2Referrals.length;
-    // Save the updated user
-    await user.save();
-
-    // Fetch Tier 1 referrals (direct referrals)
-
-    // Set initial card if none exists. This assumes there is a default card in the database.
+    // Ensure the current card is set
     const initialCard = await Cards.findOne();
     if (!user.currentCard) {
       user.currentCard = initialCard ? initialCard._id : null;
       await user.save();
     }
 
-    // Respond with user data and calculated shares
+    // Dynamically update the referrals array
+    const referredUsers = await User.find({ referred_by: telegram_id });
+    const referredIds = referredUsers.map((refUser) => refUser.telegram_id);
+
+    // Calculate new referrals
+    const newReferrals = referredIds.filter(id => !user.referrals.includes(id));
+
+    if (newReferrals.length > 0) {
+      // Add new referrals to the array
+      user.referrals.push(...newReferrals);
+
+      // Calculate additional shares for new referrals
+      const newTier1Shares = newReferrals.length * 100; // 100 shares per new referral
+
+      // Calculate Tier 2 shares for new referrals
+      const newTier2Shares = await User.aggregate([
+        {
+          $match: { referred_by: { $in: newReferrals } },
+        },
+        {
+          $group: { _id: null, count: { $sum: 1 } },
+        },
+      ]);
+
+      const newTier2SharesCount = newTier2Shares.length > 0 ? newTier2Shares[0].count * 50 : 0;
+
+      // Update claimReferrals_shares with new shares only
+      user.claimReferrals_shares += (newTier1Shares + newTier2SharesCount);
+
+      await user.save();
+    }
+
+    // Respond with the updated user data
     res.status(200).json({
       user,
     });
@@ -150,6 +182,10 @@ exports.getUsersById = async (req, res) => {
     res.status(500).json({ error: "Internal server error." });
   }
 };
+
+
+
+
 
 // ==> DELETE CHAT HISTROY
 exports.deleteUserByChatId = async (req, res) => {

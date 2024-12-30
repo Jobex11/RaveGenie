@@ -101,17 +101,14 @@ exports.getUserCards = async (req, res) => {
     let currentCard = user.currentCard;
 
     // Check if the current card has been fully completed
-    if (
-      currentCard &&
-      unlockedPoints >= currentCard.totalUnlockPoints
-    ) {
+    if (currentCard && unlockedPoints >= currentCard.totalUnlockPoints) {
       // Save the current card to user's collectedCards (if applicable)
       user.collectedCards = user.collectedCards || [];
       user.collectedCards.push({
         _id: currentCard._id,
         title: currentCard.title,
         image: currentCard.image,
-        wealthClass:currentCard.associatedWealthClass
+        wealthClass: currentCard.associatedWealthClass,
       });
 
       // Find the index of the current card in allCards
@@ -129,7 +126,7 @@ exports.getUserCards = async (req, res) => {
           _id: nextCard._id,
           title: nextCard.title,
           image: nextCard.image,
-          wealthClass:nextCard.associatedWealthClass
+          wealthClass: nextCard.associatedWealthClass,
         });
       } else {
         // No more cards to unlock
@@ -138,6 +135,7 @@ exports.getUserCards = async (req, res) => {
 
       // Save the updated unlockedCards to user
       user.unlockedCards = unlockedCards;
+      user.unlockedCardsCount = unlockedCards.length;
     }
 
     // Map over all cards to assign properties dynamically
@@ -154,10 +152,13 @@ exports.getUserCards = async (req, res) => {
         ? {
           unlockedPoints,
           progressInPercentage: Math.min(
-            Math.floor((unlockedPoints.toFixed() / card.totalUnlockPoints) * 100),
+            Math.floor(
+              (unlockedPoints.toFixed() / card.totalUnlockPoints) * 100
+            ),
             100
           ),
-          progressDisplay: `${unlockedPoints.toFixed()}/${card.totalUnlockPoints}`,
+          progressDisplay: `${unlockedPoints.toFixed()}/${card.totalUnlockPoints
+            }`,
         }
         : null;
 
@@ -165,15 +166,15 @@ exports.getUserCards = async (req, res) => {
         id: card._id,
         title: card.title,
         image: card.image,
-        wealthClass:card.associatedWealthClass,
+        wealthClass: card.associatedWealthClass,
         totalUnlockPoints: card.totalUnlockPoints,
         basePoint: card.basePoint,
+        taskPoint: card.taskPoint,
         isUnlocked,
         isCurrent,
         progress,
       };
     });
-
     // Save user changes
     await user.save();
 
@@ -181,7 +182,7 @@ exports.getUserCards = async (req, res) => {
       message: "Cards fetched successfully.",
       unlockedCards,
       cards: responseCards,
-      unlockedCardsCount: user.unlockedCards ? user.unlockedCards.length : 0
+      unlockedCardsCount: user.unlockedCards ? user.unlockedCards.length : 0,
     });
   } catch (error) {
     console.error("Error fetching user cards:", error.message);
@@ -193,8 +194,6 @@ exports.getUserCards = async (req, res) => {
   }
 };
 
-
-
 exports.getNumberOfUnlockedCards = async (req, res) => {
   const { telegram_id } = req.params;
 
@@ -202,7 +201,9 @@ exports.getNumberOfUnlockedCards = async (req, res) => {
     const user = await User.findOne({ telegram_id });
     if (!user) return res.status(404).send("User not found.");
 
-    const unlockedCardCount = user.unlockedCards ? user.unlockedCards.length : 0;
+    const unlockedCardCount = user.unlockedCards
+      ? user.unlockedCards.length
+      : 0;
 
     user.unlockedCardsCount = unlockedCardCount;
     await user.save();
@@ -217,13 +218,13 @@ exports.getNumberOfUnlockedCards = async (req, res) => {
   }
 };
 
-
 exports.deleteCards = async (req, res) => {
+  const { cardId } = req.body;
   try {
-    await Cards.deleteMany({});
-    res.status(200).json({ message: "All Cards deleted successfully" });
+    await Cards.findOneAndDelete(cardId);
+    res.status(200).json({ message: "Card deleted successfully" });
   } catch (error) {
     console.error("Error deleting tasks:", error);
     res.status(500).json({ message: "An error occurred while deleting tasks" });
   }
-}
+};
