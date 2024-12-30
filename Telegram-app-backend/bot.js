@@ -77,41 +77,51 @@ bot.onText(/\/start(?: (.+))?/, async (msg, match) => {
   bot.sendMessage(chatId, message, options);
 });
 
-bot.on("callback_query", async (callbackQuery) => {
-  const chatId = callbackQuery.message.chat.id;
+bot.on('callback_query', async (callbackQuery) => {
+  try {
+    const chatId = callbackQuery.message.chat.id;
+    const userId = callbackQuery.from.id;
 
-  // Check if the user is already created
-  const user = await axios.get(
-    `https://ravegenie-vgm7.onrender.com/api/auth/${callbackQuery.from.id}/user`
-  );
+    // Access the data from the callback
+    const referralCode = callbackQuery.data;
 
-  if (!user.data) {
-    const referredBy = callbackQuery.data; // This will be the referral code from the start= parameter
+    // Check if the user exists
+    const userResponse = await axios.get(
+      `https://ravegenie-vgm7.onrender.com/api/auth/${userId}/user`
+    );
 
-    // Send user data to your API for user creation and referral handling
-    const userData = {
-      telegram_id: callbackQuery.from.id,
-      username: callbackQuery.from.username,
-      first_name: callbackQuery.from.first_name,
-      last_name: callbackQuery.from.last_name,
-      is_bot: callbackQuery.from.is_bot,
-      language_code: callbackQuery.from.language_code,
-      chat_id: chatId,
-      referred_by: referredBy, // Capture the referral code
-    };
+    if (!userResponse.data || !userResponse.data.exists) {
+      // If user does not exist, process the referral and register the user
+      const userData = {
+        telegram_id: callbackQuery.from.id,
+        username: callbackQuery.from.username,
+        first_name: callbackQuery.from.first_name,
+        last_name: callbackQuery.from.last_name,
+        is_bot: callbackQuery.from.is_bot,
+        language_code: callbackQuery.from.language_code,
+        chat_id: chatId,
+        referred_by: referralCode || null, // Optional referral code
+      };
 
-    try {
-      // Send to your API for user creation and referral processing
-      await axios.post("https://ravegenie-vgm7.onrender.com/api/auth", userData);
-      bot.sendMessage(chatId, "Welcome! You have been successfully registered and your referral has been recorded.");
-    } catch (error) {
-      console.error("Error processing referral:", error.message);
-      bot.sendMessage(chatId, "There was an error processing your referral.");
+      try {
+        // Send user data to your API for processing
+        await axios.post("https://ravegenie-vgm7.onrender.com/api/auth", userData);
+        bot.sendMessage(chatId, "Welcome! You have been successfully registered");
+      } catch (error) {
+        console.error("Error processing referral:", error.message);
+        bot.sendMessage(chatId, "There was an error processing your referral.");
+      }
+    } else {
+      bot.sendMessage(chatId, "You have already started the bot!");
     }
-  }   
-  // else {
-  //   bot.sendMessage(chatId, "You have already started the bot!");
-  // }
+
+    // Always respond to the callback query
+    bot.answerCallbackQuery(callbackQuery.id);
+
+  } catch (error) {
+    console.error("Error processing callback query:", error.message);
+    bot.sendMessage(callbackQuery.message.chat.id, "An error occurred while processing your request.");
+  }
 });
 
 bot.on("message", async (msg) => {
