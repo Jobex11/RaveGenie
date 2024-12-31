@@ -105,7 +105,7 @@ exports.createOneTimeTasks = async (req, res) => {
     await newTask.save();
     const users = await User.find({});
     const taskMessage = ` Hey ${
-      users.username || "there"
+      users.first_name || "there"
     } a New 📝 Task is available ${title}\n\nComplete this task to earn your rewards! 🎉`;
     const options = {
       reply_markup: {

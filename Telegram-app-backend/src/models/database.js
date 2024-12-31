@@ -59,10 +59,10 @@ const userSchema = new mongoose.Schema(
       },
     ],
     story: {
-      text: { type: String, default: "This is your default story text."},
-      image: { type: String, default: "default-image-url.jpg" },
+      // text: { type: String, default: "This is your default story text." },
+      image: { type: String, default: "" },
       hasShared: { type: Boolean, default: false },
-      storyLink: { type: String, default: "http://default-story-link.com"},
+      reward: { type: Number, default: 0 },
     },
     unlockedCardsCount: { type: Number, default: 0 },
     //referral schemas

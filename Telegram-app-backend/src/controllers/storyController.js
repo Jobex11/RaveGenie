@@ -1,6 +1,5 @@
 const { User } = require("../models/database");
 const cloudinary = require("../bucket/cloudinary.js");
-const multer = require("multer");
 
 // Helper function to upload an image to Cloudinary
 const uploadImageToCloudinary = (file) => {
@@ -22,10 +21,10 @@ const uploadImageToCloudinary = (file) => {
 
 // Update stories for all users
 exports.updateStory = async (req, res) => {
-  const { text, storyLink } = req.body;
+  const { text, reward } = req.body;
 
   // Validate required fields
-  if (!text || !req.file || !storyLink) {
+  if (!text || !req.file || !reward) {
     return res.status(400).json({
       success: false,
       message: "All fields are required (text, story image, and story link)",
@@ -35,7 +34,7 @@ exports.updateStory = async (req, res) => {
   try {
     // Upload image to Cloudinary
     const cloudinaryResult = await uploadImageToCloudinary(req.file);
-    const imageUrl = cloudinaryResult.secure_url;
+    const image = cloudinaryResult.secure_url;
 
     // Update all users' stories
     const result = await User.updateMany(
@@ -43,8 +42,8 @@ exports.updateStory = async (req, res) => {
       {
         $set: {
           "story.text": text,
-          "story.image": imageUrl,
-          "story.storyLink": storyLink,
+          "story.image": image,
+          "story.reward":reward,
           "story.hasShared": false,
         },
       }
